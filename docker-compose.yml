@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 1. SQL Server (Database)
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql_container
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Password123!
+    ports:
+      - "1434:1433" # Máy ngoài 1434 -> Docker 1433
+    networks:
+      - chagee-net
+
+  # 2. Backend (Spring Boot)
+  backend:
+    build: ./backend
+    container_name: backend_container
+    ports:
+      - "8081:8080" # Máy ngoài 8081 -> Docker 8080
+    depends_on:
+      - sqlserver
+    networks:
+      - chagee-net
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://sqlserver:1433;databaseName=chagee_db;encrypt=true;trustServerCertificate=true;
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=Password123!
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+  # 3. Frontend (React) - THÊM MỚI ĐOẠN NÀY
+  frontend:
+    build: ./frontend # Đường dẫn vào thư mục frontend
+    container_name: frontend_container
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    stdin_open: true # Bắt buộc có dòng này React mới không bị tắt ngay
+    tty: true        # Bắt buộc có dòng này
+    networks:
+      - chagee-net
+
+networks:
+  chagee-net:
+    driver: bridge
