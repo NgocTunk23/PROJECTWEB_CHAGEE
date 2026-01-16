@@ -31,14 +31,14 @@ services:
 
   # 3. Frontend (React) - THÊM MỚI ĐOẠN NÀY
   frontend:
-    build: ./frontend # Đường dẫn vào thư mục frontend
+    build: ./frontend
     container_name: frontend_container
     ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    stdin_open: true # Bắt buộc có dòng này React mới không bị tắt ngay
-    tty: true        # Bắt buộc có dòng này
+      - "3001:3001"
+    environment:
+      - PORT=3001  # Dòng này cực kỳ quan trọng để đè lên cổng 3000
+    stdin_open: true
+    tty: true
     networks:
       - chagee-net
 
