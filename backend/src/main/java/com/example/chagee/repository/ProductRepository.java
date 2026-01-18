@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long> {
-    // Không cần viết gì thêm ở đây
+public interface ProductRepository extends JpaRepository<Product, String> {
+    // String ở đây là kiểu dữ liệu của khóa chính (product_id)
 }
