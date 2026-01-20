@@ -20,10 +20,10 @@ GO
 -- =============================================
 IF OBJECT_ID('Admins', 'U') IS NOT NULL DROP TABLE Admins;
 CREATE TABLE Admins (
-    username VARCHAR(50) PRIMARY KEY,--
+    username VARCHAR(255) PRIMARY KEY,--
     passwordU VARCHAR(255) NOT NULL,--\
     email VARCHAR(100) UNIQUE,--
-    phone VARCHAR(20),--
+    phone_number VARCHAR(20),--
     created_at DATETIME DEFAULT GETDATE(),--
     full_name NVARCHAR(100),--
     dob DATE,
@@ -40,7 +40,7 @@ GO
 -- =============================================
 IF OBJECT_ID('Buyers', 'U') IS NOT NULL DROP TABLE Buyers;
 CREATE TABLE Buyers (
-    username VARCHAR(50) PRIMARY KEY,--
+    username VARCHAR(255) PRIMARY KEY,--
     passwordU VARCHAR(255) NOT NULL,--
     email VARCHAR(100) UNIQUE,--
     phone VARCHAR(20),--
@@ -49,6 +49,7 @@ CREATE TABLE Buyers (
     dob DATE,
     avatar_link VARCHAR(MAX),
     gender NVARCHAR(10),
+    permission_level INT DEFAULT 0, -- Cấp độ quyền 0 là buyer
 
     reward_points INT DEFAULT 0, -- Điểm thưởng
     loyalty_code VARCHAR(50), -- Mã tích điểm
@@ -63,7 +64,7 @@ GO
 -- Liên kết MXH (Chỉ dành cho Buyer)
 IF OBJECT_ID('SocialAccounts', 'U') IS NOT NULL DROP TABLE SocialAccounts;
 CREATE TABLE SocialAccounts (
-    buyer_username VARCHAR(50),
+    buyer_username VARCHAR(255),
     provider_name VARCHAR(20), -- 'GOOGLE', 'APPLE'
     provider_id VARCHAR(255) UNIQUE,
     PRIMARY KEY (buyer_username, provider_name, provider_id),
@@ -74,7 +75,7 @@ GO
 -- Tài khoản ngân hàng (Chỉ dành cho Buyer)
 IF OBJECT_ID('BuyerBankAccounts', 'U') IS NOT NULL DROP TABLE BuyerBankAccounts;
 CREATE TABLE BuyerBankAccounts (
-    buyer_username VARCHAR(50),
+    buyer_username VARCHAR(255),
     bank_name NVARCHAR(100),
     account_number VARCHAR(50),
     card_type NVARCHAR(50),
@@ -86,8 +87,8 @@ GO
 -- Lịch sử Khóa tài khoản (Admin khóa Buyer)
 IF OBJECT_ID('AccountBans', 'U') IS NOT NULL DROP TABLE AccountBans;
 CREATE TABLE AccountBans (
-    admin_username VARCHAR(50), -- Khóa ngoại trỏ về Admins
-    buyer_username VARCHAR(50), -- Khóa ngoại trỏ về Buyers
+    admin_username VARCHAR(255), -- Khóa ngoại trỏ về Admins
+    buyer_username VARCHAR(255), -- Khóa ngoại trỏ về Buyers
     ban_time DATETIME DEFAULT GETDATE(),
     reason NVARCHAR(255),
     PRIMARY KEY (admin_username, buyer_username),
@@ -103,7 +104,7 @@ IF OBJECT_ID('Branches', 'U') IS NOT NULL DROP TABLE Branches;
 CREATE TABLE Branches (
     branch_id VARCHAR(50) PRIMARY KEY,
     addressU NVARCHAR(255) NOT NULL,
-    manager_username VARCHAR(50), -- Người quản lý là Admin
+    manager_username VARCHAR(255), -- Người quản lý là Admin
     FOREIGN KEY (manager_username) REFERENCES Admins(username)
 );
 GO
@@ -117,7 +118,7 @@ CREATE TABLE Products (
     category NVARCHAR(50),
     descriptionU NVARCHAR(MAX),
     sold_quantity INT DEFAULT 0, --! SỐ LƯỢNG ĐÃ BÁN
-    approved_by VARCHAR(50), -- Người duyệt là Admin
+    approved_by VARCHAR(255), -- Người duyệt là Admin
     FOREIGN KEY (approved_by) REFERENCES Admins(username)
 );
 GO
@@ -133,7 +134,7 @@ CREATE TABLE Vouchers (
     discount_percentage INT,
     max_discount DECIMAL(18, 2),
     min_order_value DECIMAL(18, 2),
-    created_by VARCHAR(50), -- Người tạo là Admin
+    created_by VARCHAR(255), -- Người tạo là Admin
     FOREIGN KEY (created_by) REFERENCES Admins(username)
 );
 GO
@@ -155,7 +156,7 @@ CREATE TABLE Orders (
     payment_time DATETIME,
     completion_time DATETIME,
 
-    buyer_username VARCHAR(50), -- Người mua
+    buyer_username VARCHAR(255), -- Người mua
     branch_id VARCHAR(50),
 
     FOREIGN KEY (buyer_username) REFERENCES Buyers(username), -- Chỉ liên kết với Buyers
@@ -176,7 +177,7 @@ IF OBJECT_ID('Transactions', 'U') IS NOT NULL DROP TABLE Transactions;
 CREATE TABLE Transactions (
     transaction_id VARCHAR(50),
     order_id VARCHAR(50),
-    buyer_username VARCHAR(50), -- Người thực hiện giao dịch là Buyer
+    buyer_username VARCHAR(255), -- Người thực hiện giao dịch là Buyer
     amount DECIMAL(18, 2),
     transaction_time DATETIME DEFAULT GETDATE(),
     payment_gateway NVARCHAR(50),
@@ -236,7 +237,7 @@ GO
 -- 1. ADMIN
 -- =============================================
 INSERT INTO Admins (
-    username, passwordU, email, phone, full_name, permission_level
+    username, passwordU, email, phone_number, full_name, permission_level
 ) VALUES
 ('manager01', '123456789', 'manager01@chagee.com', '0909000001', N'Nguyễn Ngọc Tôn', 10),
 ('manager02', '123456789', 'manager02@chagee.com', '0909000002', N'Phan Ngọc Quỳnh Trang', 10);

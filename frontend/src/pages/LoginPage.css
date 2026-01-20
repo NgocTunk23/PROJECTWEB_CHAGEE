@@ -1,0 +1,79 @@
+/* Container chính: Căn giữa màn hình, tạo khung trắng đổ bóng */
+.login-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 80px auto; /* Cách lề trên 80px và căn giữa ngang */
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Tiêu đề "Đăng nhập" */
+.login-container h2 {
+    margin-bottom: 25px;
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Label (Tên đăng nhập, Mật khẩu) */
+.login-container label {
+    display: block;
+    text-align: left;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+}
+
+/* Ô nhập liệu (Input) */
+.login-container input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box; /* Giữ kích thước không bị vỡ do padding */
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+/* Hiệu ứng khi bấm vào ô input */
+.login-container input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+}
+
+/* Nút Đăng nhập */
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Hiệu ứng khi di chuột vào nút */
+.login-container button:hover {
+    background-color: #0056b3;
+}
+
+/* Dòng thông báo lỗi (màu đỏ) */
+.error-message {
+    color: #d9534f;
+    background-color: #f9d6d5;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #f0ad4e;
+    font-size: 14px;
+}

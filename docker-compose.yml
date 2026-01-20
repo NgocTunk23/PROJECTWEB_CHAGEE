@@ -16,7 +16,7 @@ services:
     build: ./backend
     container_name: backend_container
     ports:
-      - "8081:8080" # Máy ngoài 8081 -> Docker 8080
+      - "8080:8080" # Máy ngoài 8081 -> Docker 8080
     depends_on:
       - sqlserver
     networks:
@@ -26,6 +26,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=sa
       - SPRING_DATASOURCE_PASSWORD=Password123!
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      #=validate =create  =update
 
   # 3. Frontend (React) - THÊM MỚI ĐOẠN NÀY
   frontend:
