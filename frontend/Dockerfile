@@ -5,7 +5,8 @@ FROM node:20-alpine
 WORKDIR /app
 
 # 3. Copy file quản lý thư viện vào trước (để tận dụng cache)
-COPY package*.json ./
+# COPY package*.json ./ BẢN CŨ
+COPY package.json package-lock.json ./
 
 # 4. Cài đặt thư viện
 RUN npm install
@@ -14,7 +15,11 @@ RUN npm install
 COPY . .
 
 # 6. Mở cổng 3000
-EXPOSE 3000
+EXPOSE 3001
 
-# 7. Lệnh chạy React
-CMD ["npm", "start"]
+# 7. Lệnh chạy React BẢN CŨ
+# CMD ["npm", "start"]s
+
+
+# 7. Lệnh chạy Vite
+CMD ["npm", "run", "dev"]
