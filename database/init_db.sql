@@ -246,10 +246,10 @@ GO
 -- 2. BUYERS
 -- =============================================
 INSERT INTO Buyers (
-    username, passwordU, email, phone, full_name, reward_points, membership_tier
+    username, passwordU, email, phone, full_name, reward_points, membership_tier, avatar_link
 ) VALUES
-('member01', '123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 120, N'Silver'),
-('member02', '123456789', 'member02@gmail.com', '0911000002', N'Trần Nhi', 300, N'Gold');
+('member01', '123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 120, N'Silver', 'images/user_avts/avt_member01.jpeg'),
+('member02', '123456789', 'member02@gmail.com', '0911000002', N'Trần Nhi', 300, N'Gold', 'images/user_avts/avt_member02.jpeg');
 GO
 
 -- =============================================
@@ -289,21 +289,21 @@ INSERT INTO Products (
     product_id, product_name, product_image, display_price,
     category, descriptionU, approved_by
 ) VALUES
-('P01', N'Trà Sữa Xanh Nhài',                       NULL, 69000, N'Trà Sữa Tươi Nguyên Lá',  N'Trà sữa xanh nhài thơm mát, hậu vị tinh tế',            'manager01'),
-('P02', N'Trà Sữa Ô Long Quế Hoa',                  NULL, 71000, N'Trà Sữa Tươi Nguyên Lá',  N'Trà ô long phối hoa quế, vị ngọt thanh tao',            'manager01'),
-('P03', N'Trà Sữa Thiết Quan Âm',                   NULL, 68000, N'Trà Sữa Tươi Nguyên Lá',  N'Trà Thiết Quan Âm hương trà tinh tế, hậu vị mượt mà',   'manager01'),
-('P04', N'Trà Sữa Xanh Nếp',                        NULL, 67000, N'Trà Sữa Tươi Nguyên Lá',  N'Trà xanh nếp độc đáo, hòa quyện sữa tươi chất lượng',   'manager01'),
-('P05', N'Trà Sữa Đại Hồng Bào',                    NULL, 75000, N'Trà Sữa Tươi Nguyên Lá',  N'Trà sữa Đại Hồng Bào đậm đà, hương sắc sâu lắng',       'manager01'),
-('P06', N'Trà Sữa Phổ Nhĩ Hoa Hồng',                NULL, 78000, N'Trà Sữa Tươi Nguyên Lá',  N'Trà Phổ Nhĩ kết hợp hoa hồng đỏ, vị mịn màng',          'manager01'),
-('P07', N'Trà Sữa Đen Mộc Khói',                    NULL, 70000, N'Trà Sữa Tươi Nguyên Lá',  N'Trà sữa đen mộc khói, cân bằng vị đậm và nhẹ',          'manager01'),
-('P08', N'Trà Nguyên Bản Đại Hồng Bào',             NULL, 59000, N'Trà Nguyên Bản',          N'Trà nguyên bản Đại Hồng Bào, hương vị trà thuần túy',   'manager01'),
-('P09', N'Trà Nguyên Bản Ô Long Quế Hoa',           NULL, 60000, N'Trà Nguyên Bản',          N'Trà ô long quế hoa, thơm mát tự nhiên',                 'manager01'),
-('P10', N'Teaspresso Latte Đại Hồng Bào',           NULL, 69000, N'Teaspresso Latte',        N'Trà Latte Đại Hồng Bào, vị đậm, béo nhẹ',               'manager01'),
-('P11', N'Teaspresso Latte Mộc Khói',               NULL, 69000, N'Teaspresso Latte',        N'Trà Latte Mộc Khói, hương vị khói đặc trưng',           'manager01'),
-('P12', N'Teaspresso Frappé Phổ Nhĩ Oreo',          NULL, 79000, N'Teaspresso Frappé',       N'Frappé Phổ Nhĩ kết hợp Oreo, thơm ngọt',                'manager01'),
-('P13', N'Teaspresso Frappé Đại Hồng Bào Caramel',  NULL, 78000, N'Teaspresso Frappé',       N'Frappé Đại Hồng Bào với caramel, béo mịn',              'manager01'),
-('P14', N'Trà Sữa Snow Cap Đại Hồng Bào',           NULL, 75000, N'Trà Sữa Snow Cap',        N'Trà sữa Snow Cap lớp kem tươi, vị sảng khoái',          'manager01'),
-('P15', N'Trà Sữa Snow Cap Oolong Quế Hoa',         NULL, 76000, N'Trà Sữa Snow Cap',        N'Trà sữa Snow Cap Oolong Quế Hoa, thơm nhẹ, mịn màng',   'manager01');
+('P01', N'Trà Sữa Xanh Nhài',                       'images/products_img/ts_xanh_nhai.png', 69000, N'Trà Sữa Tươi Nguyên Lá',           N'Trà sữa xanh nhài thơm mát, hậu vị tinh tế',            'manager01'),
+('P02', N'Trà Sữa Ô Long Quế Hoa',                  'images/products_img/ts_olong_que_hoa.png', 71000, N'Trà Sữa Tươi Nguyên Lá',       N'Trà ô long phối hoa quế, vị ngọt thanh tao',            'manager01'),
+('P03', N'Trà Sữa Thiết Quan Âm',                   'images/products_img/ts_thiet_quan_am.png', 68000, N'Trà Sữa Tươi Nguyên Lá',       N'Trà Thiết Quan Âm hương trà tinh tế, hậu vị mượt mà',   'manager01'),
+('P04', N'Trà Sữa Xanh Nếp',                        'images/products_img/ts_xanh_nep.png', 67000, N'Trà Sữa Tươi Nguyên Lá',            N'Trà xanh nếp độc đáo, hòa quyện sữa tươi chất lượng',   'manager01'),
+('P05', N'Trà Sữa Đại Hồng Bào',                    'images/products_img/ts_dai_hong_bao.png', 75000, N'Trà Sữa Tươi Nguyên Lá',        N'Trà sữa Đại Hồng Bào đậm đà, hương sắc sâu lắng',       'manager01'),
+('P06', N'Trà Sữa Phổ Nhĩ Hoa Hồng',                'images/products_img/ts_pho_nhi_hoa_hong.png', 78000, N'Trà Sữa Tươi Nguyên Lá',    N'Trà Phổ Nhĩ kết hợp hoa hồng đỏ, vị mịn màng',          'manager01'),
+('P07', N'Trà Sữa Đen Mộc Khói',                    'images/products_img/ts_den_moc_khoi.png', 70000, N'Trà Sữa Tươi Nguyên Lá',        N'Trà sữa đen mộc khói, cân bằng vị đậm và nhẹ',          'manager01'),
+('P08', N'Trà Nguyên Bản Đại Hồng Bào',             'images/products_img/t_dai_hong_bao.png', 59000, N'Trà Nguyên Bản',                 N'Trà nguyên bản Đại Hồng Bào, hương vị trà thuần túy',   'manager01'),
+('P09', N'Trà Nguyên Bản Ô Long Quế Hoa',           'images/products_img/t_olong_que_hoa.png', 60000, N'Trà Nguyên Bản',                N'Trà ô long quế hoa, thơm mát tự nhiên',                 'manager01'),
+('P10', N'Teaspresso Latte Đại Hồng Bào',           'images/products_img/lat_dai_hong_bao.png', 69000, N'Teaspresso Latte',             N'Trà Latte Đại Hồng Bào, vị đậm, béo nhẹ',               'manager01'),
+('P11', N'Teaspresso Latte Mộc Khói',               'images/products_img/lat_moc_khoi.png', 69000, N'Teaspresso Latte',                 N'Trà Latte Mộc Khói, hương vị khói đặc trưng',           'manager01'),
+('P12', N'Teaspresso Frappé Phổ Nhĩ Vân Nam Oreo',  'images/products_img/fra_pho_nhi_van_nam.png', 79000, N'Teaspresso Frappé',         N'Frappé Phổ Nhĩ kết hợp Oreo, thơm ngọt',                'manager01'),
+('P13', N'Teaspresso Frappé Đại Hồng Bào Caramel',  'images/products_img/fra_dai_hong_bao_cara.png', 78000, N'Teaspresso Frappé',       N'Frappé Đại Hồng Bào với caramel, béo mịn',              'manager01'),
+('P14', N'Trà Sữa Snow Cap Đại Hồng Bào',           'images/products_img/snow_cap_ts_dai_hong_bao.png', 75000, N'Trà Sữa Snow Cap',     N'Trà sữa Snow Cap lớp kem tươi, vị sảng khoái',          'manager01'),
+('P15', N'Trà Sữa Snow Cap Oolong Quế Hoa',         'images/products_img/snow_cap_ts_olong_que_hoa.png', 76000, N'Trà Sữa Snow Cap',    N'Trà sữa Snow Cap Oolong Quế Hoa, thơm nhẹ, mịn màng',   'manager01');
 GO
 
 -- =============================================

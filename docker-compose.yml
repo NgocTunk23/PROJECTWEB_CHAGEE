@@ -34,11 +34,11 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./frontend:/app # 1. Đồng bộ code từ máy vào Docker (Hot Reload)
-      - /app/node_modules # 2. Giữ nguyên thư viện trong Docker (tránh xung đột)
+      - ./frontend:/app # Đồng bộ code từ máy vào Docker (Hot Reload)
+      - /app/node_modules # Giữ nguyên thư viện trong Docker (tránh xung đột)
     environment:
-      - CHOKIDAR_USEPOLLING=true # 3. Giúp máy Windows của bạn kia nhận diện file thay đổi
-    command: npm run dev # 4. BẮT BUỘC: Chạy lệnh dev của Vite
+      - CHOKIDAR_USEPOLLING=true # Giúp máy Windows của Tôn kia nhận diện file thay đổi
+    command: npm run dev # BẮT BUỘC: Chạy lệnh dev của Vite
     stdin_open: true
     tty: true
     networks:
