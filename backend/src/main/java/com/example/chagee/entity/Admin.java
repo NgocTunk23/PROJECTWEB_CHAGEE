@@ -19,8 +19,8 @@ public class Admin {
     @Column(unique = true)
     private String email;
 
-    @Column(name = "phone_number")
-    private String phoneNumber;
+    @Column(name = "phonenumber")
+    private String phonenumber;
 
     // --- THÊM TRƯỜNG NÀY ---
     @Column(name = "permission_level", columnDefinition = "int default 1")

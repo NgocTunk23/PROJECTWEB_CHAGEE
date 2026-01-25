@@ -16,8 +16,8 @@ public class Buyer {
 
     @Column(unique = true)
     private String email;
-
-    private String phone;
+    @Column(name = "phonenumber")
+    private String phonenumber;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -31,11 +31,6 @@ public class Buyer {
 
     public Buyer() {}
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.permissionLevel == null) this.permissionLevel = 0; // Mặc định là Customer
-    }
 
     // Getters & Setters
     public String getUsername() { return username; }
@@ -44,12 +39,29 @@ public class Buyer {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getPhone() { return phonenumber; }
+    public void setPhone(String phone) { this.phonenumber = phone; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
     public Integer getPermissionLevel() { return permissionLevel; }
     public void setPermissionLevel(Integer permissionLevel) { this.permissionLevel = permissionLevel; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    @Column(name = "reward_points", columnDefinition = "int default 0")
+    private Integer rewardPoints;
+
+    // Getter & Setter
+    public Integer getRewardPoints() { return rewardPoints; }
+    public void setRewardPoints(Integer rewardPoints) { this.rewardPoints = rewardPoints; }
+    
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        if (this.permissionLevel == null) this.permissionLevel = 0;
+        if (this.rewardPoints == null) this.rewardPoints = 0; // Mặc định 0 điểm
+    }
 }

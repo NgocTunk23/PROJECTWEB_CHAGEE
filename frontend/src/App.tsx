@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HomePage } from './components/HomePage';
 import { MenuPage } from './components/MenuPage';
 import { OrdersPage } from './components/OrdersPage';
@@ -9,44 +9,30 @@ import { CartPage } from './components/CartPage';
 import { CheckoutPage, OrderData } from './components/CheckoutPage';
 import { OrderConfirmation } from './components/OrderConfirmation';
 import { LoginPage, RegisterData } from './components/LoginPage';
-import { branches } from './data/branches';
-import { products } from './data/products';
+import { CartService } from './services/cartService';
+import { AuthService } from './services/authService';
 import { Voucher, calculateVoucherDiscount } from './data/vouchers';
 import { Home, Coffee, ClipboardList, User } from 'lucide-react';
 
 export type NavigationPage = 'home' | 'menu' | 'orders' | 'profile';
 
-// Type definitions dựa theo SQL Schema
+// --- Interfaces giữ nguyên ---
 export interface Product {
   id: string;
-  product_id?: string;
   name: string;
-  nameEn?: string;
-  product_name?: string;
-  description: string;
-  descriptionU?: string;
   price: number;
-  display_price?: number;
-  originalPrice?: number;
   image: string;
-  product_image?: string | null;
-  category: string;
-  isBestseller?: boolean;
-  isDeal?: boolean;
-  sold_quantity?: number;
+  description?: string;
+  category?: string;
 }
 
 export interface Store {
   id: string;
-  branch_id?: string;
   name: string;
-  branch_name?: string;
   address: string;
-  addressU?: string;
   distance: string;
   prepTime: string;
   image?: string;
-  manager_username?: string;
 }
 
 export interface CartItem {
@@ -65,20 +51,15 @@ export interface CartItem {
 
 export interface Order {
   id: string;
-  order_id?: string;
   items: CartItem[];
   store: Store;
-  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-  orderType: 'pickup' | 'delivery';
+  status: 'pending' | 'preparing' | 'ready' | 'completed';
   totalPrice: number;
   discount?: number;
-  appliedVoucher?: Voucher;
   customerName?: string;
   customerPhone?: string;
   paymentMethod?: string;
   orderTime: Date;
-  payment_time?: Date;
-  completion_time?: Date;
 }
 
 function App() {
@@ -86,36 +67,120 @@ function App() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isStoreSelectorOpen, setIsStoreSelectorOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  
+  // State dữ liệu
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [userPoints, setUserPoints] = useState({ teaLeaves: 0, vouchers: 3 });
-  
-  // New states for checkout flow
+  const [userPoints, setUserPoints] = useState({ teaLeaves: 0, vouchers: 0 });
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // State UI
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  // const [showLogin, setShowLogin] = useState(false); // <-- KHÔNG CẦN DÙNG CÁI NÀY NỮA VÌ TA CHECK currentUser TRỰC TIẾP
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_isLoading, setIsLoading] = useState(false);
 
-  const addToCart = (item: CartItem) => {
-    const newItem = {
-      ...item,
-      id: `${item.product.id}-${Date.now()}-${Math.random()}`
-    };
-    setCartItems(prev => [...prev, newItem]);
-    setSelectedProduct(null);
+  // --- 1. LOGIN & REGISTER ---
+  const handleLogin = async (username: string, password: string) => {
+    setIsLoading(true);
+    try {
+      // response lúc này là data trả về từ Backend (JwtResponse)
+      // Cấu trúc nó sẽ là: { accessToken, username, email, rewardPoints, roles }
+      const response = await AuthService.login(username, password);
+      
+      // 1. Set Current User (Lấy thẳng từ response, không có .user)
+      setCurrentUser(response); 
+      
+      // 2. Set Points (Lấy thẳng rewardPoints từ response)
+      setUserPoints({ 
+        teaLeaves: response.rewardPoints || 0, // <--- SỬA CHỖ NÀY
+        vouchers: 3 // Vouchers tạm thời hardcode hoặc lấy từ API khác sau
+      });
+
+      // Lưu vào localStorage để F5 không bị mất login
+      localStorage.setItem("user", JSON.stringify(response));
+
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Đăng nhập thất bại. Vui lòng kiểm tra lại!");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateCartQuantity = (itemId: string, quantity: number) => {
-    setCartItems(prev => 
-      prev.map(item => item.id === itemId ? { ...item, quantity } : item)
-    );
+  const handleRegister = async (data: RegisterData) => {
+    setIsLoading(true);
+    try {
+      const response = await AuthService.register(data);
+      setCurrentUser(response.user); // Đăng ký xong vào luôn
+      alert("Đăng ký thành công!");
+    } catch (error) {
+      console.error("Register failed:", error);
+      alert("Đăng ký thất bại. Vui lòng thử lại!");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const removeFromCart = (itemId: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== itemId));
+  // --- 2. LOAD GIỎ HÀNG TỪ DB ---
+  useEffect(() => {
+    if (currentUser?.id) {
+      const fetchCart = async () => {
+        try {
+          const items = await CartService.getCart(currentUser.id);
+          setCartItems(items);
+        } catch (error) {
+          console.error("Failed to load cart:", error);
+        }
+      };
+      fetchCart();
+    } else {
+      setCartItems([]);
+    }
+  }, [currentUser]);
+
+  // --- 3. CÁC HÀM XỬ LÝ KHÁC (ADD, UPDATE, REMOVE, CHECKOUT) ---
+  const addToCart = async (item: CartItem) => {
+    if (!currentUser) return; // Đã có rào chắn login ở dưới nên không cần alert ở đây
+    try {
+      await CartService.addToCart(item, currentUser.id);
+      const updatedCart = await CartService.getCart(currentUser.id);
+      setCartItems(updatedCart);
+      setSelectedProduct(null);
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      alert("Lỗi khi thêm vào giỏ hàng!");
+    }
+  };
+
+  const updateCartQuantity = async (itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      await removeFromCart(itemId);
+      return;
+    }
+    setCartItems(prev => prev.map(item => item.id === itemId ? { ...item, quantity } : item));
+    try {
+      await CartService.updateQuantity(itemId, quantity);
+    } catch (error) {
+      console.error("Update quantity error:", error);
+      if (currentUser?.id) {
+        const items = await CartService.getCart(currentUser.id);
+        setCartItems(items);
+      }
+    }
+  };
+
+  const removeFromCart = async (itemId: string) => {
+    try {
+      await CartService.removeItem(itemId);
+      setCartItems(prev => prev.filter(item => item.id !== itemId));
+    } catch (error) {
+      console.error("Remove item error:", error);
+    }
   };
 
   const handleCheckout = (voucher: Voucher | null) => {
@@ -126,24 +191,18 @@ function App() {
 
   const handleConfirmOrder = (orderData: OrderData) => {
     if (cartItems.length === 0 || !selectedStore) return;
-
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const discount = appliedVoucher ? calculateVoucherDiscount(appliedVoucher, subtotal) : 0;
-    const total = subtotal - discount;
-
+    
     const newOrder: Order = {
       id: `ORD${Date.now()}`,
-      order_id: `ORD${Date.now()}`,
       items: cartItems,
       store: selectedStore,
       status: 'pending',
-      orderType: 'pickup',
-      totalPrice: total,
+      totalPrice: subtotal - discount,
       discount,
-      appliedVoucher: appliedVoucher || undefined,
       customerName: orderData.customerName,
       customerPhone: orderData.customerPhone,
-      paymentMethod: orderData.paymentMethod,
       orderTime: new Date()
     };
 
@@ -154,53 +213,7 @@ function App() {
     setShowOrderConfirmation(true);
   };
 
-  const handlePayNow = () => {
-    alert('Chuyển đến trang thanh toán...');
-    // TODO: Implement payment gateway
-  };
-
-  const handleLogin = (username: string, password: string) => {
-    // Mock login - In production, call API
-    const mockUser = {
-      username,
-      full_name: username === 'member01' ? 'Nguyễn Văn An' : 'Trần Nhi',
-      reward_points: username === 'member01' ? 120 : 300,
-      membership_tier: username === 'member01' ? 'Silver' : 'Gold'
-    };
-    setCurrentUser(mockUser);
-    setUserPoints({ teaLeaves: mockUser.reward_points, vouchers: 3 });
-    setShowLogin(false);
-  };
-
-  const handleRegister = (data: RegisterData) => {
-    // Mock register - In production, call API
-    const newUser = {
-      username: data.username,
-      full_name: data.full_name,
-      reward_points: 0,
-      membership_tier: 'Member'
-    };
-    setCurrentUser(newUser);
-    setShowLogin(false);
-  };
-
-  const placeOrder = (orderType: 'pickup' | 'delivery') => {
-    if (cartItems.length === 0 || !selectedStore) return;
-
-    const newOrder: Order = {
-      id: `ORD${Date.now()}`,
-      items: cartItems,
-      store: selectedStore,
-      status: 'pending',
-      orderType,
-      totalPrice: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      orderTime: new Date()
-    };
-
-    setOrders(prev => [newOrder, ...prev]);
-    setCartItems([]);
-  };
-
+  // --- 4. RENDER GIAO DIỆN CHÍNH (SIDEBAR + MAIN CONTENT) ---
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
@@ -218,6 +231,7 @@ function App() {
             selectedStore={selectedStore}
             onSelectStore={() => setIsStoreSelectorOpen(true)}
             onProductClick={setSelectedProduct}
+            onAddToCart={addToCart}
             cartItems={cartItems}
             onOpenCart={() => setShowCart(true)}
           />
@@ -230,7 +244,7 @@ function App() {
             userPoints={userPoints} 
             orders={orders}
             currentUser={currentUser}
-            onOpenLogin={() => setShowLogin(true)}
+            onOpenLogin={() => {}} // Đã login rồi thì hàm này vô nghĩa
           />
         );
       default:
@@ -238,11 +252,27 @@ function App() {
     }
   };
 
+  // ==========================================
+  // LOGIC HIỂN THỊ CHÍNH (QUAN TRỌNG NHẤT)
+  // ==========================================
+  
+  // 1. Nếu chưa đăng nhập -> HIỆN TRANG LOGIN FULL MÀN HÌNH
+  if (!currentUser) {
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        // Truyền hàm rỗng để không cho phép đóng popup (bắt buộc login)
+        onClose={() => {}} 
+      />
+    );
+  }
+
+  // 2. Nếu đã đăng nhập -> HIỆN GIAO DIỆN CHÍNH CỦA APP
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
-      {/* Main Content */}
       <div className="md:max-w-7xl md:mx-auto md:flex md:gap-6 md:py-6">
-        {/* Desktop Sidebar */}
+        {/* Sidebar */}
         <aside className="hidden md:block md:w-64 bg-white rounded-lg shadow-sm h-fit sticky top-6">
           <nav className="p-4 space-y-2">
             {[
@@ -255,9 +285,7 @@ function App() {
                 key={item.id}
                 onClick={() => setCurrentPage(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  currentPage === item.id
-                    ? 'bg-red-50 text-red-600'
-                    : 'text-gray-700 hover:bg-gray-50'
+                  currentPage === item.id ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <item.icon size={20} />
@@ -267,13 +295,13 @@ function App() {
           </nav>
         </aside>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <main className="flex-1 md:bg-white md:rounded-lg md:shadow-sm md:overflow-hidden">
           {renderPage()}
         </main>
       </div>
 
-      {/* Bottom Navigation - Mobile */}
+      {/* Mobile Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
         <div className="grid grid-cols-4">
           {[
@@ -296,7 +324,7 @@ function App() {
         </div>
       </nav>
 
-      {/* Store Selector Modal */}
+      {/* Các Modal / Popup chức năng */}
       {isStoreSelectorOpen && (
         <StoreSelector
           selectedStore={selectedStore}
@@ -308,7 +336,6 @@ function App() {
         />
       )}
 
-      {/* Product Detail Modal */}
       {selectedProduct && selectedStore && (
         <ProductDetail
           product={selectedProduct}
@@ -318,7 +345,6 @@ function App() {
         />
       )}
 
-      {/* Cart Page */}
       {showCart && (
         <CartPage
           cartItems={cartItems}
@@ -329,7 +355,6 @@ function App() {
         />
       )}
 
-      {/* Checkout Page */}
       {showCheckout && (
         <CheckoutPage
           cartItems={cartItems}
@@ -339,14 +364,10 @@ function App() {
           discount={appliedVoucher ? calculateVoucherDiscount(appliedVoucher, cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)) : 0}
           total={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) - (appliedVoucher ? calculateVoucherDiscount(appliedVoucher, cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)) : 0)}
           onConfirmOrder={handleConfirmOrder}
-          onBack={() => {
-            setShowCheckout(false);
-            setShowCart(true);
-          }}
+          onBack={() => { setShowCheckout(false); setShowCart(true); }}
         />
       )}
 
-      {/* Order Confirmation Page */}
       {showOrderConfirmation && pendingOrder && (
         <OrderConfirmation
           orderId={pendingOrder.id}
@@ -358,20 +379,8 @@ function App() {
           }}
           selectedStore={selectedStore}
           total={pendingOrder.totalPrice}
-          onPayNow={handlePayNow}
-          onBackToHome={() => {
-            setShowOrderConfirmation(false);
-            setCurrentPage('home');
-          }}
-        />
-      )}
-
-      {/* Login Page */}
-      {showLogin && (
-        <LoginPage
-          onLogin={handleLogin}
-          onRegister={handleRegister}
-          onClose={() => setShowLogin(false)}
+          onPayNow={() => alert('Thanh toán online...')}
+          onBackToHome={() => { setShowOrderConfirmation(false); setCurrentPage('home'); }}
         />
       )}
     </div>

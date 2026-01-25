@@ -14,6 +14,6 @@ public interface BuyerRepository extends JpaRepository<Buyer, String> {
 
     // --- DÒNG NÀY SẼ SỬA LỖI CỦA BẠN ---
     // Kiểm tra xem số điện thoại đã tồn tại trong DB chưa (dùng cho Register)
-    Boolean existsByPhone(String phone);
+    Boolean existsByPhonenumber(String phonenumber);
     
 }

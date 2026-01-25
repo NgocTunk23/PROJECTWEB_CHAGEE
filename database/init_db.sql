@@ -48,7 +48,7 @@ CREATE TABLE Admins (
     username VARCHAR(255) PRIMARY KEY,--
     passwordU VARCHAR(255) NOT NULL,--
     email VARCHAR(100) UNIQUE,--
-    phone_number VARCHAR(20),--
+    phonenumber VARCHAR(20),--
     created_at DATETIME DEFAULT GETDATE(),--
     full_name NVARCHAR(100),--
     dob DATE,
@@ -68,13 +68,13 @@ CREATE TABLE Buyers (
     username VARCHAR(255) PRIMARY KEY,--
     passwordU VARCHAR(255) NOT NULL,--
     email VARCHAR(100) UNIQUE,--
-    phone_number VARCHAR(20),--
+    phonenumber VARCHAR(20),--
     created_at DATETIME DEFAULT GETDATE(),--
     full_name NVARCHAR(100),--
     dob DATE,
     avatar_link VARCHAR(MAX),
     gender NVARCHAR(10),
-
+    permission_level INT DEFAULT 0, -- Cấp độ quyền (0= NGƯỜI MUA THƯỜNG)--
     reward_points INT DEFAULT 0, -- Điểm thưởng
     loyalty_code VARCHAR(255), -- Mã tích điểm
     membership_tier NVARCHAR(255) DEFAULT 'Member' -- Hạng thành viên
@@ -261,7 +261,7 @@ GO
 -- 1. ADMIN
 -- =============================================
 INSERT INTO Admins (
-    username, passwordU, email, phone_number, full_name, permission_level
+    username, passwordU, email, phonenumber, full_name, permission_level
 ) VALUES
 ('manager01', '123456789', 'manager01@chagee.com', '0909000001', N'Nguyễn Ngọc Tôn', 10),
 ('manager02', '123456789', 'manager02@chagee.com', '0909000002', N'Phan Ngọc Quỳnh Trang', 10);
@@ -271,7 +271,7 @@ GO
 -- 2. BUYERS
 -- =============================================
 INSERT INTO Buyers (
-    username, passwordU, email, phone_number, full_name, reward_points, membership_tier, avatar_link
+    username, passwordU, email, phonenumber, full_name, reward_points, membership_tier, avatar_link
 ) VALUES
 ('member01', '123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 120, N'Silver', 'images/user_avts/avt_member01.jpeg'),
 ('member02', '123456789', 'member02@gmail.com', '0911000002', N'Trần Nhi', 300, N'Gold', 'images/user_avts/avt_member02.jpeg');

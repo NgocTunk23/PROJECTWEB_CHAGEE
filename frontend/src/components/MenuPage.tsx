@@ -1,61 +1,50 @@
 import { useState, useEffect } from 'react';
 import { Store, CartItem } from '../App';
 import { ChevronRight, ChevronLeft, Plus, ShoppingBag } from 'lucide-react';
-// QUAN TRỌNG: Import Service để gọi API
 import { ProductService, ProductAPI } from '../services/productService';
 
 interface MenuPageProps {
   selectedStore: Store | null;
   onSelectStore: () => void;
   onProductClick: (product: any) => void;
+  onAddToCart: (item: any) => void;
   cartItems: CartItem[];
   onOpenCart?: () => void;
 }
 
-export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartItems, onOpenCart }: MenuPageProps) {
-  // --- STATE QUẢN LÝ DỮ LIỆU TỪ API ---
+export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddToCart, cartItems, onOpenCart }: MenuPageProps) {
+  // State quản lý dữ liệu API
   const [categories, setCategories] = useState<string[]>([]);
   const [products, setProducts] = useState<ProductAPI[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>(""); 
   const [isLoading, setIsLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // --- 1. KHI TRANG VỪA LOAD: GỌI API LẤY MÓN ---
+  // --- 1. Fetch dữ liệu ban đầu ---
   useEffect(() => {
     const initData = async () => {
       try {
         setIsLoading(true);
-        // Gọi song song 2 API: Lấy danh mục và Lấy tất cả món
         const [catsData, prodsData] = await Promise.all([
           ProductService.getCategories(),
           ProductService.getProducts() 
         ]);
-
         setCategories(catsData);
         setProducts(prodsData);
-
-        // Tự động chọn danh mục đầu tiên (nếu có)
-        if (catsData.length > 0) {
-          setSelectedCategory(catsData[0]);
-        }
+        if (catsData.length > 0) setSelectedCategory(catsData[0]);
       } catch (error) {
         console.error("Lỗi kết nối Backend:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
     initData();
   }, []);
 
-  // --- 2. XỬ LÝ KHI BẤM VÀO DANH MỤC (GỌI API LỌC) ---
+  // --- 2. Lọc theo danh mục ---
   const handleCategoryClick = async (category: string) => {
     setSelectedCategory(category);
-    setIsSidebarOpen(false); // Đóng menu trên mobile
-    
     try {
       setIsLoading(true);
-      // Gọi API lấy món theo danh mục vừa chọn
       const data = await ProductService.getProducts(category);
       setProducts(data);
     } catch (error) {
@@ -83,7 +72,6 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartIte
           </div>
         </div>
 
-        {/* Store Selection */}
         <button
           onClick={onSelectStore}
           className="w-full px-4 py-3 flex items-center justify-between border-t border-gray-100 hover:bg-gray-50"
@@ -108,9 +96,8 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartIte
         </button>
       </header>
 
-      {/* Main Content */}
       <div className="flex">
-        {/* Sidebar - Desktop (Load từ API) */}
+        {/* Sidebar - Desktop */}
         <aside className="hidden lg:block w-64 border-r border-gray-100 h-[calc(100vh-180px)] sticky top-[180px] overflow-y-auto">
           <nav className="p-4 space-y-1">
             {categories.map(category => (
@@ -129,50 +116,7 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartIte
           </nav>
         </aside>
 
-        {/* Sidebar - Mobile (Load từ API) */}
-        <div className={`lg:hidden fixed left-0 top-0 bottom-0 w-48 bg-white border-r border-gray-100 z-40 transform transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="p-4 border-b border-gray-100">
-            <button onClick={() => setIsSidebarOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
-              <ChevronLeft size={20} />
-            </button>
-          </div>
-          <nav className="p-2 space-y-1">
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => handleCategoryClick(category)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm ${
-                  selectedCategory === category
-                    ? 'bg-red-50 text-red-600'
-                    : 'text-gray-700'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Mobile Category Tabs */}
-        <div className="lg:hidden fixed left-0 right-0 top-[120px] bg-white border-b border-gray-100 z-20 overflow-x-auto">
-          <div className="flex gap-2 px-4 py-3 whitespace-nowrap">
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => handleCategoryClick(category)}
-                className={`px-4 py-2 rounded-full text-sm ${
-                  selectedCategory === category
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Product List (Load từ API) */}
+        {/* Product List */}
         <div className="flex-1 px-4 py-6 mt-16 lg:mt-0">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-xl mb-4">{selectedCategory || "Tất cả món"}</h2>
@@ -187,13 +131,11 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartIte
                     <p className="text-gray-500 text-center">Không tìm thấy món nào.</p>
                 ) : (
                     products.map(product => {
-                    // --- MAP DỮ LIỆU API SANG GIAO DIỆN ---
                     const productUI = {
-                        id: product.productId, // Dữ liệu từ API
+                        id: product.productId, // ID thật từ DB
                         name: product.productName,
                         description: product.description || "Hương vị tuyệt hảo",
                         price: product.displayPrice,
-                        // Fix lỗi ảnh 1: Mặc định dùng placehold.co nếu API trả về null
                         image: product.productImage || 'https://placehold.co/150?text=No+Image', 
                         category: product.category,
                         isBestseller: (product.soldQuantity || 0) > 100
@@ -205,15 +147,14 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartIte
                         className="flex gap-4 bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => onProductClick(productUI)}
                         >
-                        {/* --- Fix lỗi ảnh 2: Bắt sự kiện onError --- */}
                         <img
                             src={productUI.image}
                             alt={productUI.name}
                             className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.onerror = null; // Ngắt vòng lặp lỗi
-                                target.src = 'https://placehold.co/150?text=No+Image'; // Ảnh dự phòng an toàn
+                                target.onerror = null;
+                                target.src = 'https://placehold.co/150?text=No+Image';
                             }}
                         />
                         
@@ -233,7 +174,41 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartIte
                             </span>
                             </div>
                         </div>
-                        <button className="w-10 h-10 bg-blue-900 text-white rounded-lg flex items-center justify-center hover:bg-blue-800 flex-shrink-0">
+                        
+                        {/* NÚT THÊM VÀO GIỎ (Đã cập nhật logic) */}
+                        <button 
+                          className="w-10 h-10 bg-blue-900 text-white rounded-lg flex items-center justify-center hover:bg-blue-800 flex-shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            
+                            // 1. Kiểm tra đã chọn cửa hàng chưa
+                            if (!selectedStore) {
+                              onSelectStore();
+                              return;
+                            }
+
+                            // 2. Tạo object chuẩn bị gửi API
+                            // Lưu ý: ID ở đây là tạm thời, Backend sẽ sinh ID cart detail mới
+                            const cartItem = {
+                              id: `temp_${Date.now()}`, 
+                              product: productUI,
+                              name: productUI.name,
+                              image: productUI.image,
+                              price: productUI.price,
+                              
+                              // Mặc định cho nút thêm nhanh
+                              size: "M",
+                              sugar: "100%",
+                              ice: "Bình thường",
+                              toppings: [], 
+                              quantity: 1,
+                              store: selectedStore
+                            };
+                            
+                            // 3. Gọi hàm từ App.tsx (sẽ trigger API call)
+                            onAddToCart(cartItem);
+                          }}
+                        >
                             <Plus size={20} />
                         </button>
                         </div>
@@ -245,14 +220,6 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, cartIte
           </div>
         </div>
       </div>
-
-      {/* Overlay và Nút Giỏ hàng */}
-      {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
 
       {cartItems.length > 0 && (
         <button 
