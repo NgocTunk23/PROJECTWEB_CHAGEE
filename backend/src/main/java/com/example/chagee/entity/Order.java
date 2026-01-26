@@ -1,183 +1,94 @@
-package com.example.chagee.entity;
+package com.example.chagee.entity; // ✅ SỬA THÀNH entity
 
 import jakarta.persistence.*;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
-@Table(name = "Orders")
+@Table(name = "orders")
 public class Order {
-
-    // ========================================================================
-    // 1. CLASS: OrderDetail (Lớp con nằm bên trong Order)
-    // ========================================================================
-    @Entity
-    @Table(name = "OrderDetails")
-    public static class OrderDetail {
-
-        // --- 1.1. CLASS: OrderDetailId (Khóa chính nằm bên trong OrderDetail) ---
-        @Embeddable
-        public static class Id implements Serializable {
-            private String orderId;
-            private String productId;
-
-            public Id() {}
-            public Id(String orderId, String productId) {
-                this.orderId = orderId;
-                this.productId = productId;
-            }
-
-            // Getters/Setters ID
-            public String getOrderId() { return orderId; }
-            public void setOrderId(String orderId) { this.orderId = orderId; }
-            public String getProductId() { return productId; }
-            public void setProductId(String productId) { this.productId = productId; }
-
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                Id id = (Id) o;
-                return Objects.equals(orderId, id.orderId) &&
-                        Objects.equals(productId, id.productId);
-            }
-            @Override
-            public int hashCode() {
-                return Objects.hash(orderId, productId);
-            }
-        }
-
-        // --- 1.2. Thuộc tính của OrderDetail ---
-        @EmbeddedId
-        private Id id = new Id();
-
-        @ManyToOne
-        @MapsId("orderId") 
-        @JoinColumn(name = "order_id")
-        private Order order;
-
-        @ManyToOne
-        @MapsId("productId") 
-        @JoinColumn(name = "product_id")
-        private Product product;
-
-        @Column(name = "quantity")
-        private Integer quantity;
-
-        public OrderDetail() {}
-
-        public OrderDetail(Order order, Product product, Integer quantity) {
-            this.order = order;
-            this.product = product;
-            this.quantity = quantity;
-            this.id = new Id(order.getOrderId(), product.getProductId());
-        }
-
-        // Getters/Setters OrderDetail
-        public Id getId() { return id; }
-        public void setId(Id id) { this.id = id; }
-        public Order getOrder() { return order; }
-        public void setOrder(Order order) { this.order = order; }
-        public Product getProduct() { return product; }
-        public void setProduct(Product product) { this.product = product; }
-        public Integer getQuantity() { return quantity; }
-        public void setQuantity(Integer quantity) { this.quantity = quantity; }
-    }
-
-    // ========================================================================
-    // 2. MAIN CLASS: Order (Lớp chính)
-    // ========================================================================
-    
     @Id
-    @Column(name = "order_id", length = 50)
-    private String orderId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(name = "payment_method")
-    private String paymentMethod;
+    private Long user_id;
+    private Double total_price;
+    private String address;
+    private String phone;
+    private Date created_at;
 
-    @Column(name = "original_price")
-    private BigDecimal originalPrice;
-
-    @Column(name = "tax_price")
-    private BigDecimal taxPrice;
-
-    @Column(name = "statusU")
-    private String status;
-
-    @Column(name = "order_time")
-    private LocalDateTime orderTime;
-
-    @Column(name = "payment_time")
-    private LocalDateTime paymentTime;
-
-    @Column(name = "completion_time")
-    private LocalDateTime completionTime;
-
-    // --- Quan hệ ---
-
-    @ManyToOne
-    @JoinColumn(name = "buyer_username")
-    private Buyer buyer;
-
-    @ManyToOne
-    @JoinColumn(name = "branch_id")
-    private Branch branch;
-
-    // List chứa các chi tiết đơn hàng (Link tới static class bên trên)
+    // Liên kết: 1 Order có nhiều OrderDetail
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderDetail> orderDetails = new ArrayList<>();
 
-    // --- Constructor ---
-    public Order() {}
-
-    @PrePersist
-    protected void onCreate() {
-        if (this.orderTime == null) this.orderTime = LocalDateTime.now();
-        if (this.status == null) this.status = "Pending";
-        if (this.taxPrice == null) this.taxPrice = BigDecimal.ZERO;
+    public Order() {
+        this.created_at = new Date();
     }
 
-    // --- Helper để thêm sản phẩm vào đơn hàng dễ dàng ---
-    public void addProduct(Product product, Integer quantity) {
-        OrderDetail detail = new OrderDetail(this, product, quantity);
-        orderDetails.add(detail);
-    }
+    // --- Getter & Setter của Order ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    // --- Getters và Setters của Order ---
-    public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
+    public Long getUser_id() { return user_id; }
+    public void setUser_id(Long user_id) { this.user_id = user_id; }
 
-    public String getPaymentMethod() { return paymentMethod; }
-    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public Double getTotal_price() { return total_price; }
+    public void setTotalPrice(Double total_price) { this.total_price = total_price; }
 
-    public BigDecimal getOriginalPrice() { return originalPrice; }
-    public void setOriginalPrice(BigDecimal originalPrice) { this.originalPrice = originalPrice; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
-    public BigDecimal getTaxPrice() { return taxPrice; }
-    public void setTaxPrice(BigDecimal taxPrice) { this.taxPrice = taxPrice; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public LocalDateTime getOrderTime() { return orderTime; }
-    public void setOrderTime(LocalDateTime orderTime) { this.orderTime = orderTime; }
-
-    public LocalDateTime getPaymentTime() { return paymentTime; }
-    public void setPaymentTime(LocalDateTime paymentTime) { this.paymentTime = paymentTime; }
-
-    public LocalDateTime getCompletionTime() { return completionTime; }
-    public void setCompletionTime(LocalDateTime completionTime) { this.completionTime = completionTime; }
-
-    public Buyer getBuyer() { return buyer; }
-    public void setBuyer(Buyer buyer) { this.buyer = buyer; }
-
-    public Branch getBranch() { return branch; }
-    public void setBranch(Branch branch) { this.branch = branch; }
+    public Date getCreatedAt() { return created_at; }
+    public void setCreatedAt(Date created_at) { this.created_at = created_at; }
 
     public List<OrderDetail> getOrderDetails() { return orderDetails; }
     public void setOrderDetails(List<OrderDetail> orderDetails) { this.orderDetails = orderDetails; }
+
+    // ========================================================
+    // CLASS CON: ORDER DETAIL (Nằm gọn trong file này luôn)
+    // ========================================================
+    @Entity
+    @Table(name = "order_details")
+    public static class OrderDetail {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+
+        // Liên kết ngược về Order cha
+        @ManyToOne
+        @JoinColumn(name = "order_id")
+        private Order order;
+
+        private Long product_id;
+        private Integer quantity;
+        private Double price;
+        private String note;
+
+        public OrderDetail() {}
+
+        // --- Getter & Setter của OrderDetail ---
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+
+        public Order getOrder() { return order; }
+        public void setOrder(Order order) { this.order = order; }
+
+        public Long getProductId() { return product_id; }
+        public void setProductId(Long product_id) { this.product_id = product_id; }
+
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+        public Double getPrice() { return price; }
+        public void setPrice(Double price) { this.price = price; }
+
+        public String getNote() { return note; }
+        public void setNote(String note) { this.note = note; }
+
+        
+    }
 }

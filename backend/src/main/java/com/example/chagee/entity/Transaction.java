@@ -11,16 +11,17 @@ import java.util.Objects;
 public class Transaction {
 
     // ========================================================================
-    // 1. CLASS ID (KHÓA CHÍNH PHỨC HỢP - 3 CỘT)
+    // 1. CLASS ID (KHÓA CHÍNH PHỨC HỢP)
     // ========================================================================
     @Embeddable
     public static class Id implements Serializable {
         
         @Column(name = "transaction_id", length = 50)
-        private String transactionId; // Mã giao dịch (VD: TXN001)
+        private String transactionId; 
 
-        @Column(name = "order_id", length = 50)
-        private String orderId;
+        // SỬA: Đổi từ String sang Long để khớp với Order.java
+        @Column(name = "order_id")
+        private Long orderId; 
 
         @Column(name = "buyer_username", length = 50)
         private String buyerUsername;
@@ -28,23 +29,25 @@ public class Transaction {
         // --- Constructors ---
         public Id() {}
 
-        public Id(String transactionId, String orderId, String buyerUsername) {
+        // SỬA: Constructor nhận Long orderId
+        public Id(String transactionId, Long orderId, String buyerUsername) {
             this.transactionId = transactionId;
             this.orderId = orderId;
             this.buyerUsername = buyerUsername;
         }
 
-        // --- Getters & Setters (Bắt buộc) ---
+        // --- Getters & Setters ---
         public String getTransactionId() { return transactionId; }
         public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
 
-        public String getOrderId() { return orderId; }
-        public void setOrderId(String orderId) { this.orderId = orderId; }
+        // SỬA: Getter/Setter cho Long
+        public Long getOrderId() { return orderId; }
+        public void setOrderId(Long orderId) { this.orderId = orderId; }
 
         public String getBuyerUsername() { return buyerUsername; }
         public void setBuyerUsername(String buyerUsername) { this.buyerUsername = buyerUsername; }
 
-        // --- Equals & HashCode (Bắt buộc cho Composite Key) ---
+        // --- Equals & HashCode ---
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -66,7 +69,7 @@ public class Transaction {
     // ========================================================================
 
     @EmbeddedId
-    private Id id = new Id(); // Khởi tạo sẵn để tránh NullPointerException
+    private Id id = new Id(); 
 
     // Liên kết Foreign Key tới Order
     @ManyToOne
@@ -98,15 +101,15 @@ public class Transaction {
 
     public Transaction() {}
 
-    // Constructor tiện lợi để tạo nhanh giao dịch
     public Transaction(String transactionCode, Order order, Buyer buyer, BigDecimal amount, String gateway, String bankName) {
         this.order = order;
         this.buyer = buyer;
         this.amount = amount;
         this.paymentGateway = gateway;
         this.bankName = bankName;
-        // Tự động set ID
-        this.id = new Id(transactionCode, order.getOrderId(), buyer.getUsername());
+        
+        // SỬA: Truyền Long (order.getId()) vào đây là hợp lệ
+        this.id = new Id(transactionCode, order.getId(), buyer.getUsername());
     }
 
     @PrePersist
@@ -128,7 +131,8 @@ public class Transaction {
         this.order = order;
         // Sync ID
         if (order != null) {
-            this.id.setOrderId(order.getOrderId());
+            // SỬA LỖI: Đổi .setId() thành .setOrderId()
+            this.id.setOrderId(order.getId());
         }
     }
 
@@ -153,7 +157,6 @@ public class Transaction {
     public String getBankName() { return bankName; }
     public void setBankName(String bankName) { this.bankName = bankName; }
     
-    // Helper để set Transaction ID (mã giao dịch VNPay/Momo trả về)
     public void setTransactionCode(String code) {
         this.id.setTransactionId(code);
     }
