@@ -16,29 +16,18 @@ const sizeOptions = [
 
 const sugarLevels = ['0%', '30%', '50%', '70%', '100%'];
 const iceLevels = ['Không đá', 'Ít đá', 'Đá bình thường', 'Nhiều đá'];
-const toppingOptions = [
-  { name: 'Trân châu trắng', price: 8000 },
-  { name: 'Trân châu đen', price: 8000 },
-  { name: 'Thạch phô mai', price: 10000 },
-  { name: 'Pudding trứng', price: 10000 },
-  { name: 'Kem cheese', price: 12000 }
-];
+
+// ❌ Đã xóa danh sách toppingOptions
 
 export function ProductDetail({ product, store, onClose, onAddToCart }: ProductDetailProps) {
   const [size, setSize] = useState('M');
   const [sugar, setSugar] = useState('100%');
   const [ice, setIce] = useState('Đá bình thường');
-  const [toppings, setToppings] = useState<string[]>([]);
+  // ❌ Đã xóa state toppings
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
 
-  const toggleTopping = (toppingName: string) => {
-    setToppings(prev =>
-      prev.includes(toppingName)
-        ? prev.filter(t => t !== toppingName)
-        : [...prev, toppingName]
-    );
-  };
+  // ❌ Đã xóa toggleTopping
 
   const calculateTotal = () => {
     let total = product.price;
@@ -46,25 +35,29 @@ export function ProductDetail({ product, store, onClose, onAddToCart }: ProductD
     const selectedSize = sizeOptions.find(s => s.name === size);
     if (selectedSize) total += selectedSize.price;
     
-    toppings.forEach(toppingName => {
-      const topping = toppingOptions.find(t => t.name === toppingName);
-      if (topping) total += topping.price;
-    });
+    // ❌ Đã xóa vòng lặp tính tiền topping
     
     return total * quantity;
   };
 
   const handleAddToCart = () => {
     const item: CartItem = {
+      // Thêm ID cho CartItem
+      id: `cart_${Date.now()}`,
+      name: product.name,
+      image: product.image,
+      price: calculateTotal() / quantity, // Giá đơn vị (đã cộng size)
+      
       product,
       size,
       sugar,
       ice,
-      toppings,
+      toppings: [], // ✅ Luôn truyền mảng rỗng
       quantity,
       store
     };
     onAddToCart(item);
+    onClose();
   };
 
   return (
@@ -82,8 +75,8 @@ export function ProductDetail({ product, store, onClose, onAddToCart }: ProductD
       {/* Product Image */}
       <div className="w-full aspect-square bg-gray-100">
         <img
-          src={product.image || product.product_image || 'https://via.placeholder.com/400'}
-          alt={product.name || product.product_name || ''}
+          src={product.image || 'https://via.placeholder.com/400'}
+          alt={product.name || ''}
           className="w-full h-full object-cover"
         />
       </div>
@@ -92,18 +85,12 @@ export function ProductDetail({ product, store, onClose, onAddToCart }: ProductD
       <div className="px-4 py-6 space-y-6 max-w-4xl mx-auto pb-32">
         {/* Product Header */}
         <div>
-          <h2 className="text-xl mb-2">{product.name || product.product_name}</h2>
-          {product.nameEn && <p className="text-sm text-gray-500 mb-2">{product.nameEn}</p>}
-          {(product.description || product.descriptionU) && (
-            <p className="text-sm text-gray-600 mb-3">{product.description || product.descriptionU}</p>
+          <h2 className="text-xl mb-2">{product.name}</h2>
+          {(product.description) && (
+            <p className="text-sm text-gray-600 mb-3">{product.description}</p>
           )}
           <div className="flex items-center gap-2">
-            <span className="text-xl text-red-600">₫ {(product.price || product.display_price || 0).toLocaleString('vi-VN')}</span>
-            {product.originalPrice && (
-              <span className="text-sm text-gray-400 line-through">
-                ₫ {product.originalPrice.toLocaleString('vi-VN')}
-              </span>
-            )}
+            <span className="text-xl text-red-600">₫ {product.price.toLocaleString('vi-VN')}</span>
           </div>
         </div>
 
@@ -172,26 +159,7 @@ export function ProductDetail({ product, store, onClose, onAddToCart }: ProductD
           </div>
         </div>
 
-        {/* Toppings */}
-        <div>
-          <h3 className="mb-3 text-sm">Thêm topping (tùy chọn)</h3>
-          <div className="space-y-2">
-            {toppingOptions.map(topping => (
-              <button
-                key={topping.name}
-                onClick={() => toggleTopping(topping.name)}
-                className={`w-full p-4 rounded-lg border-2 transition-all flex items-center justify-between ${
-                  toppings.includes(topping.name)
-                    ? 'border-red-600 bg-red-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <span>{topping.name}</span>
-                <span className="text-red-600">+₫{topping.price.toLocaleString('vi-VN')}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* ❌ ĐÃ ẨN GIAO DIỆN CHỌN TOPPING */}
 
         {/* Note */}
         <div>

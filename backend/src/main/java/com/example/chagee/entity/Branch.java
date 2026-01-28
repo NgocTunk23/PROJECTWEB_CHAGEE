@@ -3,28 +3,30 @@ package com.example.chagee.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "Branches")
+@Table(name = "Branches") // Khớp: Branches
 public class Branch {
     @Id
-    @Column(name = "branch_id", length = 50)
-    private String branchId;
+    @Column(name = "branchid", length = 255) // Khớp: branchid VARCHAR(255)
+    private String branchid;
 
-    @Column(name = "addressU", nullable = false)
+    @Column(name = "addressU", nullable = false) // Khớp: addressU NVARCHAR(255)
     private String address;
 
     @ManyToOne
-    @JoinColumn(name = "manager_username")
-    private Admin manager;
+    @JoinColumn(name = "managerusername") // Khớp: managerusername VARCHAR(255)
+    private Admin managerusername;
 
     public Branch() {}
 
-    // Getters và Setters
-    public String getBranchId() { return branchId; }
-    public void setBranchId(String branchId) { this.branchId = branchId; }
+    // ========================================================================
+    // GETTERS & SETTERS (Đã đổi tên theo biến viết liền)
+    // ========================================================================
+    public String getBranchid() { return branchid; }
+    public void setBranchid(String branchid) { this.branchid = branchid; }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public String getAddressU() { return address; }
+    public void setAddressU(String address) { this.address= address; }
 
-    public Admin getManager() { return manager; }
-    public void setManager(Admin manager) { this.manager = manager; }
+    public Admin getManagerusername() { return managerusername; }
+    public void setManagerusername(Admin managerusername) { this.managerusername = managerusername; }
 }

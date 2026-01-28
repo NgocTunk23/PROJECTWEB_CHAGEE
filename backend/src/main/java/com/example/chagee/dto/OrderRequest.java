@@ -1,106 +1,61 @@
 package com.example.chagee.dto;
 
 import java.util.List;
-
+import java.math.BigDecimal;
 public class OrderRequest {
     
-    // --- Các biến (Fields) ---
-    private Long user_id;
-    private Double total_price;
-    private String address;
-    private String phone;
+    private String buyerusername; // Thay cho user_id
+    private BigDecimal originalprice; // Thay cho total_price
+    private String paymentmethod; // Thêm để khớp SQL
+    private String branchid;      // Thêm để khớp SQL
     private List<OrderItemRequest> items;
 
-    // --- Constructor mặc định (Bắt buộc để Spring đọc JSON) ---
+    // ⚠️ ĐÃ BỎ: address, phone (Vì Database không có cột này trong bảng Orders)
+
     public OrderRequest() {
     }
 
-    // --- Getter và Setter thủ công (Thay thế cho @Data) ---
+    // ==========================================
+    // GETTERS & SETTERS (Viết liền theo SQL)
+    // ==========================================
+    public String getBuyerusername() { return buyerusername; }
+    public void setBuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
 
-    public Long getUser_id() {
-        return user_id;
-    }
+    public BigDecimal getOriginalprice() { return originalprice; }
+    public void setOriginalprice(BigDecimal originalprice) { this.originalprice = originalprice; }
 
-    public void setUser_id(Long user_id) {
-        this.user_id = user_id;
-    }
+    public String getPaymentmethod() { return paymentmethod; }
+    public void setPaymentmethod(String paymentmethod) { this.paymentmethod = paymentmethod; }
 
-    public Double getTotal_price() {
-        return total_price;
-    }
+    public String getBranchid() { return branchid; }
+    public void setBranchid(String branchid) { this.branchid = branchid; }
 
-    public void setTotal_price(Double total_price) {
-        this.total_price = total_price;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public List<OrderItemRequest> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItemRequest> items) {
-        this.items = items;
-    }
+    public List<OrderItemRequest> getItems() { return items; }
+    public void setItems(List<OrderItemRequest> items) { this.items = items; }
 
     // ==========================================
-    // Class con bên trong (Inner Class) cho từng món hàng
+    // Inner Class: OrderItemRequest
     // ==========================================
     public static class OrderItemRequest {
-        private Long product_id;
+        
+        private String productid; // Thay cho product_id
         private Integer quantity;
-        private Double price;
-        private String note; // Ghi chú (đường, đá...)
+        private BigDecimal price;
+        private String note; 
 
         public OrderItemRequest() {
         }
 
-        // Getter và Setter cho class con
+        public String getProductid() { return productid; }
+        public void setProductid(String productid) { this.productid = productid; }
 
-        public Long getProduct_id() {
-            return product_id;
-        }
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-        public void setProduct_id(Long product_id) {
-            this.product_id = product_id;
-        }
+        public BigDecimal getPrice() { return price; }
+        public void setPrice(BigDecimal price) { this.price = price; }
 
-        public Integer getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(Integer quantity) {
-            this.quantity = quantity;
-        }
-
-        public Double getPrice() {
-            return price;
-        }
-
-        public void setPrice(Double price) {
-            this.price = price;
-        }
-
-        public String getNote() {
-            return note;
-        }
-
-        public void setNote(String note) {
-            this.note = note;
-        }
+        public String getNote() { return note; }
+        public void setNote(String note) { this.note = note; }
     }
 }

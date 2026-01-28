@@ -1,7 +1,7 @@
 package com.example.chagee.controller;
 
 import com.example.chagee.dto.OrderRequest;
-import com.example.chagee.entity.Order; // ✅ ĐÃ SỬA ĐÚNG IMPORT
+import com.example.chagee.entity.Order; 
 import com.example.chagee.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,35 +20,37 @@ public class OrderController {
         try {
             // 1. Tạo đơn hàng cha (Order)
             Order newOrder = new Order();
-            newOrder.setUser_id(orderData.getUser_id());
-            newOrder.setTotalPrice(orderData.getTotal_price());
-            newOrder.setAddress(orderData.getAddress());
-            newOrder.setPhone(orderData.getPhone());
 
-            // 2. Tạo danh sách con (Details)
+            // Gán các trường từ Request (Đã đổi tên viết liền không gạch dưới)
+            newOrder.setBuyerusername(orderData.getBuyerusername()); 
+            newOrder.setOriginalprice(orderData.getOriginalprice());
+            newOrder.setPaymentmethod(orderData.getPaymentmethod());
+            newOrder.setBranchid(orderData.getBranchid());
+            
+            // Lưu ý: orderid, ordertime, statusU, taxprice đã có giá trị mặc định trong Entity
+
+            // 2. Tạo danh sách chi tiết đơn hàng (OrderDetails)
             if (orderData.getItems() != null) {
                 for (OrderRequest.OrderItemRequest itemReq : orderData.getItems()) {
                     
-                    // Gọi class con thông qua class cha Order
                     Order.OrderDetail detail = new Order.OrderDetail();
                     
-                    detail.setProductId(itemReq.getProduct_id());
+                    // Gán các trường chi tiết (Viết liền khớp SQL)
+                    detail.setProductid(itemReq.getProductid());
                     detail.setQuantity(itemReq.getQuantity());
-                    detail.setPrice(itemReq.getPrice());
-                    detail.setNote(itemReq.getNote());
-
-                    // Gắn cha cho con
-                    detail.setOrder(newOrder); 
+                    detail.setPrice(itemReq.getPrice()); // Đã mở lại vì SQL có cột price
+                    detail.setNote(itemReq.getNote());   // Đã mở lại vì SQL có cột note
                     
-                    // Gắn con vào danh sách của cha
+                    // Gắn liên kết 2 chiều giữa cha và con
+                    detail.setOrder(newOrder);
                     newOrder.getOrderDetails().add(detail);
                 }
             }
 
-            // 3. Lưu xuống Database (Lưu 1 được cả 2)
+            // 3. Lưu xuống Database (CascadeType.ALL sẽ tự lưu luôn các OrderDetail)
             Order savedOrder = orderRepository.save(newOrder);
 
-            return ResponseEntity.ok("Đặt hàng thành công! Mã đơn: " + savedOrder.getId());
+            return ResponseEntity.ok("Đặt hàng thành công! Mã đơn: " + savedOrder.getOrderid());
 
         } catch (Exception e) {
             e.printStackTrace();

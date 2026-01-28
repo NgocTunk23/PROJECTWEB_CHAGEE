@@ -11,12 +11,11 @@ import { OrderConfirmation } from './components/OrderConfirmation';
 import { LoginPage, RegisterData } from './components/LoginPage';
 import { CartService } from './services/cartService';
 import { AuthService } from './services/authService';
-import { Voucher, calculateVoucherDiscount } from './data/vouchers';
 import { Home, Coffee, ClipboardList, User } from 'lucide-react';
 
 export type NavigationPage = 'home' | 'menu' | 'orders' | 'profile';
 
-// --- Interfaces giữ nguyên ---
+// --- Interfaces ---
 export interface Product {
   id: string;
   name: string;
@@ -53,57 +52,56 @@ export interface Order {
   id: string;
   items: CartItem[];
   store: Store;
-  status: 'pending' | 'preparing' | 'ready' | 'completed';
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
   totalPrice: number;
-  discount?: number;
   customerName?: string;
   customerPhone?: string;
   paymentMethod?: string;
   orderTime: Date;
 }
 
+export interface SizeOption {
+  name: string;
+  price: number;
+}
+
+export interface CustomizationOptions {
+  size: SizeOption[];
+  sugar: string[];
+  ice: string[];
+  toppings: string[];
+}
+
 function App() {
+  // State điều hướng & UI
   const [currentPage, setCurrentPage] = useState<NavigationPage>('home');
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isStoreSelectorOpen, setIsStoreSelectorOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  
+  const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_isLoading, setIsLoading] = useState(false);
+
   // State dữ liệu
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [userPoints, setUserPoints] = useState({ teaLeaves: 0, vouchers: 0 });
   const [currentUser, setCurrentUser] = useState<any>(null);
-
-  // State UI
-  const [showCart, setShowCart] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
-  // const [showLogin, setShowLogin] = useState(false); // <-- KHÔNG CẦN DÙNG CÁI NÀY NỮA VÌ TA CHECK currentUser TRỰC TIẾP
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
-  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_isLoading, setIsLoading] = useState(false);
 
   // --- 1. LOGIN & REGISTER ---
   const handleLogin = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      // response lúc này là data trả về từ Backend (JwtResponse)
-      // Cấu trúc nó sẽ là: { accessToken, username, email, rewardPoints, roles }
       const response = await AuthService.login(username, password);
-      
-      // 1. Set Current User (Lấy thẳng từ response, không có .user)
-      setCurrentUser(response); 
-      
-      // 2. Set Points (Lấy thẳng rewardPoints từ response)
+      setCurrentUser(response);
       setUserPoints({ 
-        teaLeaves: response.rewardPoints || 0, // <--- SỬA CHỖ NÀY
-        vouchers: 3 // Vouchers tạm thời hardcode hoặc lấy từ API khác sau
+        teaLeaves: response.rewardPoints || 0,
+        vouchers: 0 
       });
-
-      // Lưu vào localStorage để F5 không bị mất login
       localStorage.setItem("user", JSON.stringify(response));
-
     } catch (error) {
       console.error("Login failed:", error);
       alert("Đăng nhập thất bại. Vui lòng kiểm tra lại!");
@@ -116,7 +114,7 @@ function App() {
     setIsLoading(true);
     try {
       const response = await AuthService.register(data);
-      setCurrentUser(response.user); // Đăng ký xong vào luôn
+      setCurrentUser(response.user);
       alert("Đăng ký thành công!");
     } catch (error) {
       console.error("Register failed:", error);
@@ -127,6 +125,15 @@ function App() {
   };
 
   // --- 2. LOAD GIỎ HÀNG TỪ DB ---
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      setCurrentUser(parsedUser);
+      setUserPoints({ teaLeaves: parsedUser.rewardPoints || 0, vouchers: 0 });
+    }
+  }, []);
+
   useEffect(() => {
     if (currentUser?.id) {
       const fetchCart = async () => {
@@ -143,9 +150,9 @@ function App() {
     }
   }, [currentUser]);
 
-  // --- 3. CÁC HÀM XỬ LÝ KHÁC (ADD, UPDATE, REMOVE, CHECKOUT) ---
+  // --- 3. CÁC HÀM XỬ LÝ GIỎ HÀNG ---
   const addToCart = async (item: CartItem) => {
-    if (!currentUser) return; // Đã có rào chắn login ở dưới nên không cần alert ở đây
+    if (!currentUser) return;
     try {
       await CartService.addToCart(item, currentUser.id);
       const updatedCart = await CartService.getCart(currentUser.id);
@@ -167,10 +174,6 @@ function App() {
       await CartService.updateQuantity(itemId, quantity);
     } catch (error) {
       console.error("Update quantity error:", error);
-      if (currentUser?.id) {
-        const items = await CartService.getCart(currentUser.id);
-        setCartItems(items);
-      }
     }
   };
 
@@ -183,37 +186,93 @@ function App() {
     }
   };
 
-  const handleCheckout = (voucher: Voucher | null) => {
-    setAppliedVoucher(voucher);
+  // --- 4. CHECKOUT & ORDER ---
+  const handleCheckout = () => {
+    // Không nhận voucher nữa
     setShowCart(false);
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = (orderData: OrderData) => {
-    if (cartItems.length === 0 || !selectedStore) return;
+  const handleConfirmOrder = async (orderData: OrderData) => {
+    if (cartItems.length === 0 || !selectedStore || !currentUser) return;
+
+    // 1. Tính tổng tiền
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const discount = appliedVoucher ? calculateVoucherDiscount(appliedVoucher, subtotal) : 0;
-    
-    const newOrder: Order = {
-      id: `ORD${Date.now()}`,
-      items: cartItems,
-      store: selectedStore,
-      status: 'pending',
-      totalPrice: subtotal - discount,
-      discount,
-      customerName: orderData.customerName,
-      customerPhone: orderData.customerPhone,
-      orderTime: new Date()
+    const finalTotal = subtotal; 
+
+    // 2. Chuẩn bị payload gửi đi
+    const orderPayload = {
+      user_id: currentUser.id,
+      total_price: finalTotal,
+      phone: orderData.customerPhone,
+      address: selectedStore.address,
+      note: orderData.note,
+      items: cartItems.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.price,
+          note: `${item.size} | ${item.sugar} | ${item.ice}`,
+      }))
     };
 
-    setOrders(prev => [newOrder, ...prev]);
-    setPendingOrder(newOrder);
-    setCartItems([]);
-    setShowCheckout(false);
-    setShowOrderConfirmation(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/orders/create', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify(orderPayload)
+      });
+
+      if (response.ok) {
+        let savedOrder;
+        
+        // 👇 SỬA ĐOẠN NÀY ĐỂ TRÁNH LỖI JSON
+        try {
+            // Cố gắng đọc JSON từ Backend
+            const text = await response.text(); // Đọc dạng text trước
+            try {
+                savedOrder = JSON.parse(text); // Thử parse JSON
+            } catch {
+                // Nếu parse lỗi (do Backend trả về chữ "Đặt hàng thành công")
+                // -> Ta tự tạo object Order giả lập để hiển thị bill
+                console.log("Backend trả về text: ", text);
+                savedOrder = {
+                    id: `ORDER_${Date.now()}`, // Tự sinh mã đơn
+                    items: [...cartItems],     // Copy lại món đã đặt
+                    store: selectedStore,
+                    status: 'pending',
+                    totalPrice: finalTotal,
+                    customerName: orderData.customerName,
+                    customerPhone: orderData.customerPhone,
+                    paymentMethod: orderData.paymentMethod,
+                    orderTime: new Date()
+                };
+            }
+        } catch (e) {
+            console.error("Lỗi xử lý response:", e);
+        }
+
+        // --- XỬ LÝ THÀNH CÔNG ---
+        setCartItems([]); // Xóa giỏ hàng
+        
+        if (savedOrder) {
+            setOrders(prev => [savedOrder, ...prev]);
+            setPendingOrder(savedOrder);
+            setShowCheckout(false);
+            setShowOrderConfirmation(true);
+        }
+      } else {
+        alert("Đặt hàng thất bại, vui lòng thử lại!");
+      }
+    } catch (error) {
+      console.error("Lỗi đặt hàng:", error);
+      alert("Có lỗi kết nối đến server!");
+    }
   };
 
-  // --- 4. RENDER GIAO DIỆN CHÍNH (SIDEBAR + MAIN CONTENT) ---
+  // --- 5. RENDER TRANG ---
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
@@ -244,7 +303,7 @@ function App() {
             userPoints={userPoints} 
             orders={orders}
             currentUser={currentUser}
-            onOpenLogin={() => {}} // Đã login rồi thì hàm này vô nghĩa
+            onOpenLogin={() => {}} 
           />
         );
       default:
@@ -252,23 +311,20 @@ function App() {
     }
   };
 
-  // ==========================================
-  // LOGIC HIỂN THỊ CHÍNH (QUAN TRỌNG NHẤT)
-  // ==========================================
+  // --- MAIN UI ---
   
-  // 1. Nếu chưa đăng nhập -> HIỆN TRANG LOGIN FULL MÀN HÌNH
+  // 1. Nếu chưa đăng nhập -> Hiện Form Login
   if (!currentUser) {
     return (
       <LoginPage
         onLogin={handleLogin}
         onRegister={handleRegister}
-        // Truyền hàm rỗng để không cho phép đóng popup (bắt buộc login)
         onClose={() => {}} 
       />
     );
   }
 
-  // 2. Nếu đã đăng nhập -> HIỆN GIAO DIỆN CHÍNH CỦA APP
+  // 2. Nếu đã đăng nhập -> Hiện App
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
       <div className="md:max-w-7xl md:mx-auto md:flex md:gap-6 md:py-6">
@@ -324,7 +380,7 @@ function App() {
         </div>
       </nav>
 
-      {/* Các Modal / Popup chức năng */}
+      {/* Modals */}
       {isStoreSelectorOpen && (
         <StoreSelector
           selectedStore={selectedStore}
@@ -359,10 +415,10 @@ function App() {
         <CheckoutPage
           cartItems={cartItems}
           selectedStore={selectedStore}
-          appliedVoucher={appliedVoucher}
+          appliedVoucher={null} // Cố định null
           subtotal={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
-          discount={appliedVoucher ? calculateVoucherDiscount(appliedVoucher, cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)) : 0}
-          total={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) - (appliedVoucher ? calculateVoucherDiscount(appliedVoucher, cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)) : 0)}
+          discount={0} // Cố định 0
+          total={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
           onConfirmOrder={handleConfirmOrder}
           onBack={() => { setShowCheckout(false); setShowCart(true); }}
         />
@@ -379,7 +435,7 @@ function App() {
           }}
           selectedStore={selectedStore}
           total={pendingOrder.totalPrice}
-          onPayNow={() => alert('Thanh toán online...')}
+          onPayNow={() => alert('Chức năng đang phát triển')}
           onBackToHome={() => { setShowOrderConfirmation(false); setCurrentPage('home'); }}
         />
       )}

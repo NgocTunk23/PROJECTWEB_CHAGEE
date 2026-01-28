@@ -1,20 +1,16 @@
-// File: backend/src/main/java/com/example/chagee/entity/Admin.java
 package com.example.chagee.entity;
-
+import java.util.Date;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "Admins")
 public class Admin {
     @Id
-    @Column(length = 50)
+    @Column(name = "username")
     private String username;
 
     @Column(name = "passwordU", nullable = false)
     private String password;
-
-    @Column(name = "full_name")
-    private String fullName;
 
     @Column(unique = true)
     private String email;
@@ -22,18 +18,36 @@ public class Admin {
     @Column(name = "phonenumber")
     private String phonenumber;
 
-    // --- THÊM TRƯỜNG NÀY ---
-    @Column(name = "permission_level", columnDefinition = "int default 1")
-    private Integer permissionLevel;
+    @Column(name = "createdat")
+    private Date createdat;
+
+    @Column(name = "fullname")
+    private String fullname;
+
+    @Column(name = "dob")
+    @Temporal(TemporalType.DATE) // Chỉ định đây là ngày sinh (chỉ có ngày, không giờ)
+    private Date dob;
+
+    @Column(name = "avatarlink", columnDefinition = "VARCHAR(MAX)") // Hoặc để String bình thường cũng được
+    private String avatarlink;
+
+    @Column(name = "gender", length = 10)
+    private String gender;
+
+    @Column(name = "permissionlevel", columnDefinition = "int default 1")
+    private Integer permissionlevel;
+
+    @Column(name = "lastlogin")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastlogin;
 
     public Admin() {}
 
     @PrePersist
     protected void onCreate() {
-        if (this.permissionLevel == null) this.permissionLevel = 1; // Mặc định là Staff
+        if (this.permissionlevel == null) this.permissionlevel = 1; // Mặc định là Staff
     }
 
-    // Getters & Setters
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     
@@ -43,6 +57,6 @@ public class Admin {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public Integer getPermissionLevel() { return permissionLevel; }
-    public void setPermissionLevel(Integer permissionLevel) { this.permissionLevel = permissionLevel; }
+    public Integer getPermissionlevel() { return permissionlevel; }
+    public void setPermissionlevel(Integer permissionlevel) { this.permissionlevel = permissionlevel; }
 }

@@ -3,165 +3,136 @@ package com.example.chagee.entity;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Objects;
 
 @Entity
-@Table(name = "Transactions")
+@Table(name = "Transactions") // Khớp: Transactions
 public class Transaction {
 
     // ========================================================================
-    // 1. CLASS ID (KHÓA CHÍNH PHỨC HỢP)
+    // 1. CLASS ID (KHÓA CHÍNH PHỨC HỢP
     // ========================================================================
     @Embeddable
     public static class Id implements Serializable {
         
-        @Column(name = "transaction_id", length = 50)
-        private String transactionId; 
+        @Column(name = "transactionid", length = 255) // Khớp: transactionid VARCHAR(255)
+        private String transactionid; 
 
-        // SỬA: Đổi từ String sang Long để khớp với Order.java
-        @Column(name = "order_id")
-        private Long orderId; 
+        @Column(name = "orderid", length = 255) // Khớp: orderid VARCHAR(255)
+        private String orderid; 
 
-        @Column(name = "buyer_username", length = 50)
-        private String buyerUsername;
+        @Column(name = "buyerusername", length = 255) // Khớp: buyerusername VARCHAR(255)
+        private String buyerusername;
 
-        // --- Constructors ---
         public Id() {}
 
-        // SỬA: Constructor nhận Long orderId
-        public Id(String transactionId, Long orderId, String buyerUsername) {
-            this.transactionId = transactionId;
-            this.orderId = orderId;
-            this.buyerUsername = buyerUsername;
+        public Id(String transactionid, String orderid, String buyerusername) {
+            this.transactionid = transactionid;
+            this.orderid = orderid;
+            this.buyerusername = buyerusername;
         }
 
-        // --- Getters & Setters ---
-        public String getTransactionId() { return transactionId; }
-        public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
+        // --- Getters & Setters (Viết liền) ---
+        public String getTransactionid() { return transactionid; }
+        public void setTransactionid(String transactionid) { this.transactionid = transactionid; }
 
-        // SỬA: Getter/Setter cho Long
-        public Long getOrderId() { return orderId; }
-        public void setOrderId(Long orderId) { this.orderId = orderId; }
+        public String getOrderid() { return orderid; }
+        public void setOrderid(String orderid) { this.orderid = orderid; }
 
-        public String getBuyerUsername() { return buyerUsername; }
-        public void setBuyerUsername(String buyerUsername) { this.buyerUsername = buyerUsername; }
+        public String getBuyerusername() { return buyerusername; }
+        public void setBuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
 
-        // --- Equals & HashCode ---
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Id id = (Id) o;
-            return Objects.equals(transactionId, id.transactionId) &&
-                   Objects.equals(orderId, id.orderId) &&
-                   Objects.equals(buyerUsername, id.buyerUsername);
+            return Objects.equals(transactionid, id.transactionid) &&
+                   Objects.equals(orderid, id.orderid) &&
+                   Objects.equals(buyerusername, id.buyerusername);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(transactionId, orderId, buyerUsername);
+            return Objects.hash(transactionid, orderid, buyerusername);
         }
     }
 
     // ========================================================================
     // 2. THUỘC TÍNH ENTITY
     // ========================================================================
-
     @EmbeddedId
     private Id id = new Id(); 
 
-    // Liên kết Foreign Key tới Order
     @ManyToOne
-    @MapsId("orderId") 
-    @JoinColumn(name = "order_id")
+    @MapsId("orderid") 
+    @JoinColumn(name = "orderid")
     private Order order;
 
-    // Liên kết Foreign Key tới Buyer
     @ManyToOne
-    @MapsId("buyerUsername")
-    @JoinColumn(name = "buyer_username")
+    @MapsId("buyerusername")
+    @JoinColumn(name = "buyerusername")
     private Buyer buyer;
 
-    @Column(name = "amount")
+    @Column(name = "amount") // Khớp: amount DECIMAL(18, 2)
     private BigDecimal amount;
 
-    @Column(name = "transaction_time")
-    private LocalDateTime transactionTime;
+    @Column(name = "transactiontime") // Khớp: transactiontime DATETIME
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date transactiontime;
 
-    @Column(name = "payment_gateway")
-    private String paymentGateway;
+    @Column(name = "paymentgateway") // Khớp: paymentgateway NVARCHAR(255)
+    private String paymentgateway;
 
-    @Column(name = "bank_name")
-    private String bankName;
+    @Column(name = "bankname") // Khớp: bankname NVARCHAR(255)
+    private String bankname;
 
-    // ========================================================================
-    // 3. CONSTRUCTORS & LIFECYCLE
-    // ========================================================================
+    public Transaction() {
+        this.transactiontime = new Date();
+    }
 
-    public Transaction() {}
-
-    public Transaction(String transactionCode, Order order, Buyer buyer, BigDecimal amount, String gateway, String bankName) {
+    public Transaction(String transactionid, Order order, Buyer buyer, BigDecimal amount, String paymentgateway, String bankname) {
         this.order = order;
         this.buyer = buyer;
         this.amount = amount;
-        this.paymentGateway = gateway;
-        this.bankName = bankName;
-        
-        // SỬA: Truyền Long (order.getId()) vào đây là hợp lệ
-        this.id = new Id(transactionCode, order.getId(), buyer.getUsername());
+        this.paymentgateway = paymentgateway;
+        this.bankname = bankname;
+        this.transactiontime = new Date();
+        // Khởi tạo ID phức hợp
+        this.id = new Id(transactionid, order.getOrderid(), buyer.getUsername());
     }
 
     @PrePersist
     protected void onCreate() {
-        if (this.transactionTime == null) {
-            this.transactionTime = LocalDateTime.now();
-        }
+        if (this.transactiontime == null) this.transactiontime = new Date();
     }
 
-    // ========================================================================
-    // 4. GETTERS & SETTERS (FULL)
-    // ========================================================================
-
+    // --- Getters & Setters ---
     public Id getId() { return id; }
     public void setId(Id id) { this.id = id; }
 
     public Order getOrder() { return order; }
     public void setOrder(Order order) {
         this.order = order;
-        // Sync ID
-        if (order != null) {
-            // SỬA LỖI: Đổi .setId() thành .setOrderId()
-            this.id.setOrderId(order.getId());
-        }
+        if (order != null) this.id.setOrderid(order.getOrderid());
     }
 
     public Buyer getBuyer() { return buyer; }
     public void setBuyer(Buyer buyer) {
         this.buyer = buyer;
-        // Sync ID
-        if (buyer != null) {
-            this.id.setBuyerUsername(buyer.getUsername());
-        }
+        if (buyer != null) this.id.setBuyerusername(buyer.getUsername());
     }
 
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    public LocalDateTime getTransactionTime() { return transactionTime; }
-    public void setTransactionTime(LocalDateTime transactionTime) { this.transactionTime = transactionTime; }
+    public Date getTransactiontime() { return transactiontime; }
+    public void setTransactiontime(Date transactiontime) { this.transactiontime = transactiontime; }
 
-    public String getPaymentGateway() { return paymentGateway; }
-    public void setPaymentGateway(String paymentGateway) { this.paymentGateway = paymentGateway; }
+    public String getPaymentgateway() { return paymentgateway; }
+    public void setPaymentgateway(String paymentgateway) { this.paymentgateway = paymentgateway; }
 
-    public String getBankName() { return bankName; }
-    public void setBankName(String bankName) { this.bankName = bankName; }
-    
-    public void setTransactionCode(String code) {
-        this.id.setTransactionId(code);
-    }
-    
-    public String getTransactionCode() {
-        return this.id.getTransactionId();
-    }
+    public String getBankname() { return bankname; }
+    public void setBankname(String bankname) { this.bankname = bankname; }
 }

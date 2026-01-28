@@ -13,48 +13,47 @@ public class SocialAccount {
     // ========================================================================
     @Embeddable
     public static class Id implements Serializable {
-        // Phần này sẽ được map tự động thông qua @MapsId ở dưới
-        private String buyerUsername;
+        
+        @Column(name = "buyerusername")
+        private String buyerusername;
 
-        @Column(name = "provider_name", length = 20)
-        private String providerName; // VD: 'GOOGLE', 'APPLE'
+        @Column(name = "providername", length = 20)
+        private String providername; 
 
-        @Column(name = "provider_id", length = 255)
-        private String providerId;   // ID định danh từ phía Google/Apple gửi về
+        @Column(name = "providerid", length = 255)
+        private String providerid;   
 
-        // --- Constructors ---
         public Id() {}
 
-        public Id(String buyerUsername, String providerName, String providerId) {
-            this.buyerUsername = buyerUsername;
-            this.providerName = providerName;
-            this.providerId = providerId;
+        public Id(String buyerusername, String providername, String providerid) {
+            this.buyerusername = buyerusername;
+            this.providername = providername;
+            this.providerid = providerid;
         }
 
-        // --- Getters & Setters ---
-        public String getBuyerUsername() { return buyerUsername; }
-        public void setBuyerUsername(String buyerUsername) { this.buyerUsername = buyerUsername; }
+        // --- Getters & Setters (Viết liền theo SQL) ---
+        public String getBuyerusername() { return buyerusername; }
+        public void setBuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
 
-        public String getProviderName() { return providerName; }
-        public void setProviderName(String providerName) { this.providerName = providerName; }
+        public String getProvidername() { return providername; }
+        public void setProvidername(String providername) { this.providername = providername; }
 
-        public String getProviderId() { return providerId; }
-        public void setProviderId(String providerId) { this.providerId = providerId; }
+        public String getProviderid() { return providerid; }
+        public void setProviderid(String providerid) { this.providerid = providerid; }
 
-        // --- Bắt buộc: Equals & HashCode ---
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Id id = (Id) o;
-            return Objects.equals(buyerUsername, id.buyerUsername) &&
-                   Objects.equals(providerName, id.providerName) &&
-                   Objects.equals(providerId, id.providerId);
+            return Objects.equals(buyerusername, id.buyerusername) &&
+                   Objects.equals(providername, id.providername) &&
+                   Objects.equals(providerid, id.providerid);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(buyerUsername, providerName, providerId);
+            return Objects.hash(buyerusername, providername, providerid);
         }
     }
 
@@ -66,8 +65,8 @@ public class SocialAccount {
     private Id id;
 
     @ManyToOne
-    @MapsId("buyerUsername") // Map biến buyerUsername trong Id với đối tượng Buyer
-    @JoinColumn(name = "buyer_username")
+    @MapsId("buyerusername") 
+    @JoinColumn(name = "buyerusername")
     private Buyer buyer;
 
     // ========================================================================
@@ -75,44 +74,33 @@ public class SocialAccount {
     // ========================================================================
     public SocialAccount() {}
 
-    public SocialAccount(Buyer buyer, String providerName, String providerId) {
+    public SocialAccount(Buyer buyer, String providername, String providerid) {
         this.buyer = buyer;
-        // Tự động khởi tạo ID từ các thông tin truyền vào
-        this.id = new Id(buyer.getUsername(), providerName, providerId);
+        this.id = new Id(buyer.getUsername(), providername, providerid);
     }
 
     // ========================================================================
-    // 4. GETTERS & SETTERS
+    // 4. GETTERS & SETTERS (Cập nhật tên phương thức)
     // ========================================================================
 
-    public Id getId() {
-        return id;
-    }
+    public Id getId() { return id; }
+    public void setId(Id id) { this.id = id; }
 
-    public void setId(Id id) {
-        this.id = id;
-    }
-
-    public Buyer getBuyer() {
-        return buyer;
-    }
-
+    public Buyer getBuyer() { return buyer; }
     public void setBuyer(Buyer buyer) {
         this.buyer = buyer;
-        // Logic cập nhật ID đồng bộ khi set Buyer
         if (buyer != null) {
             if (this.id == null) this.id = new Id();
-            this.id.setBuyerUsername(buyer.getUsername());
+            this.id.setBuyerusername(buyer.getUsername());
         }
     }
 
-    // --- Helper Methods (Tiện ích để lấy thông tin nhanh) ---
-    
-    public String getProviderName() {
-        return id != null ? id.getProviderName() : null;
+    // --- Helper Methods (Tiện ích lấy thông tin nhanh) ---
+    public String getProvidername() {
+        return id != null ? id.getProvidername() : null;
     }
 
-    public String getProviderId() {
-        return id != null ? id.getProviderId() : null;
+    public String getProviderid() {
+        return id != null ? id.getProviderid() : null;
     }
 }

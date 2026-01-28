@@ -1,100 +1,118 @@
-import { useState } from 'react';
+// import { useState } from 'react';
 import { CartItem } from '../App';
-import { vouchers, calculateVoucherDiscount, Voucher } from '../data/vouchers';
-import { ChevronLeft, Trash2, Plus, Minus, Tag, X } from 'lucide-react';
+import { ChevronLeft, Trash2, Plus, Minus, Tag } from 'lucide-react';
+
+// Interface cho Voucher (Tạm thời để đây để không lỗi code cũ, dù chưa dùng)
+export interface Voucher {
+  id: string;
+  code: string;
+  description: string;
+  value: number;
+  minOrder: number;
+}
 
 interface CartPageProps {
   cartItems: CartItem[];
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
-  onCheckout: (appliedVoucher: Voucher | null) => void;
+  onCheckout: () => void; // Không cần tham số voucher nữa
   onClose: () => void;
 }
 
-export function CartPage({ cartItems, onUpdateQuantity, onRemoveItem, onCheckout, onClose }: CartPageProps) {
-  const [showVoucherModal, setShowVoucherModal] = useState(false);
-  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
+export function CartPage({ 
+  cartItems, 
+  onUpdateQuantity, 
+  onRemoveItem, 
+  onCheckout, 
+  onClose 
+}: CartPageProps) {
+  
+  // State tạm thời không dùng
+  // const [showVoucherModal, setShowVoucherModal] = useState(false);
+  // const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
 
-  // Tính tổng tiền
+  // Tính tổng tiền (Không trừ giảm giá)
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const discount = appliedVoucher ? calculateVoucherDiscount(appliedVoucher, subtotal) : 0;
+  const discount = 0; 
   const total = subtotal - discount;
-
-  const handleApplyVoucher = (voucher: Voucher) => {
-    if (subtotal >= voucher.min_order_value) {
-      setAppliedVoucher(voucher);
-      setShowVoucherModal(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 px-4 py-4 flex items-center gap-3">
-        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+      <header className="bg-white border-b border-gray-100 px-4 py-4 flex items-center gap-3 shadow-sm z-10">
+        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-xl flex-1">Giỏ hàng</h1>
-        <span className="text-gray-500">({cartItems.length} món)</span>
+        <h1 className="text-xl flex-1 font-bold text-gray-800">Giỏ hàng</h1>
+        <span className="text-gray-500 font-medium">({cartItems.length} món)</span>
       </header>
 
-      {/* Cart Items */}
-      <div className="flex-1 overflow-y-auto pb-32">
+      {/* Cart Items List */}
+      <div className="flex-1 overflow-y-auto pb-40 bg-gray-50">
         {cartItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 px-4">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 px-4 mt-[-60px]">
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-6">
               <span className="text-4xl">🛒</span>
             </div>
-            <p className="text-lg mb-2">Giỏ hàng trống</p>
-            <p className="text-sm text-center">Thêm món yêu thích vào giỏ hàng nhé!</p>
+            <p className="text-xl font-semibold text-gray-600 mb-2">Giỏ hàng trống</p>
+            <p className="text-sm text-gray-500 mb-6">Hãy thêm vài món ngon vào đây nhé!</p>
+            <button 
+              onClick={onClose}
+              className="px-6 py-3 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+            >
+              Xem thực đơn
+            </button>
           </div>
         ) : (
           <div className="px-4 py-6 space-y-4">
             {cartItems.map(item => (
-              <div key={item.id} className="bg-white border border-gray-100 rounded-xl p-4">
+              <div key={item.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
                 <div className="flex gap-4">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                    className="w-24 h-24 rounded-lg object-cover flex-shrink-0 bg-gray-100"
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="mb-1">{item.name}</h3>
-                        <div className="space-y-0.5 text-xs text-gray-500">
-                          {item.size && <p>Size: {item.size}</p>}
-                          {item.sugar && <p>Đường: {item.sugar}</p>}
-                          {item.ice && <p>Đá: {item.ice}</p>}
-                          {item.toppings && item.toppings.length > 0 && (
-                            <p>Topping: {item.toppings.join(', ')}</p>
-                          )}
-                        </div>
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-bold text-gray-800 line-clamp-1 text-lg">{item.name}</h3>
+                        <button
+                          onClick={() => onRemoveItem(item.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors absolute top-3 right-3"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => onRemoveItem(item.id)}
-                        className="p-1 text-red-500 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      
+                      <div className="text-xs text-gray-500 mt-1 space-y-1">
+                        <p className="flex items-center gap-1">
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{item.size}</span>
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{item.sugar}</span>
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{item.ice}</span>
+                        </p>
+                        {item.toppings && item.toppings.length > 0 && (
+                           <p className="text-gray-500 line-clamp-1">+ {item.toppings.join(', ')}</p>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-red-600">
-                        ₫ {(item.price * item.quantity).toLocaleString('vi-VN')}
+                    <div className="flex items-end justify-between mt-3">
+                      <span className="text-red-600 font-bold text-lg">
+                        {(item.price * item.quantity).toLocaleString('vi-VN')}đ
                       </span>
                       
-                      <div className="flex items-center gap-3 bg-gray-100 rounded-full px-2 py-1">
+                      <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1 border border-gray-200">
                         <button
                           onClick={() => onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                          className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded-full"
+                          className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md shadow-sm transition-all text-gray-600"
                         >
                           <Minus size={16} />
                         </button>
-                        <span className="w-6 text-center">{item.quantity}</span>
+                        <span className="w-6 text-center font-bold text-gray-800">{item.quantity}</span>
                         <button
                           onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                          className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded-full"
+                          className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md shadow-sm transition-all text-gray-600"
                         >
                           <Plus size={16} />
                         </button>
@@ -105,136 +123,50 @@ export function CartPage({ cartItems, onUpdateQuantity, onRemoveItem, onCheckout
               </div>
             ))}
 
-            {/* Voucher Section */}
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+            {/* Voucher Section (Tạm khóa) */}
+            <div className="bg-gray-100 border border-dashed border-gray-300 rounded-xl p-4 opacity-70">
               <button
-                onClick={() => setShowVoucherModal(true)}
-                className="w-full flex items-center justify-between"
+                disabled={true} 
+                className="w-full flex items-center justify-between cursor-not-allowed"
               >
                 <div className="flex items-center gap-3">
-                  <Tag size={20} className="text-orange-600" />
+                  <div className="p-2 bg-gray-200 rounded-full">
+                    <Tag size={20} className="text-gray-500" />
+                  </div>
                   <div className="text-left">
-                    {appliedVoucher ? (
-                      <>
-                        <p className="text-sm text-orange-900">{appliedVoucher.voucher_name}</p>
-                        <p className="text-xs text-orange-700">
-                          Giảm ₫ {discount.toLocaleString('vi-VN')}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-sm text-orange-900">Chọn mã giảm giá</p>
-                    )}
+                    <p className="text-sm font-bold text-gray-700">Mã giảm giá</p>
+                    <p className="text-xs text-gray-500">Chức năng đang bảo trì</p>
                   </div>
                 </div>
-                {appliedVoucher ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setAppliedVoucher(null);
-                    }}
-                    className="p-1 hover:bg-orange-200 rounded-full"
-                  >
-                    <X size={18} className="text-orange-700" />
-                  </button>
-                ) : (
-                  <span className="text-orange-600 text-sm">Chọn →</span>
-                )}
+                <span className="text-gray-400 text-sm font-medium">Chọn &rarr;</span>
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom Summary */}
+      {/* Footer Thanh toán */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-          <div className="px-4 py-4 space-y-3">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] p-4 z-50 rounded-t-2xl">
+          <div className="max-w-7xl mx-auto space-y-4">
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tạm tính</span>
-                <span>₫ {subtotal.toLocaleString('vi-VN')}</span>
+              <div className="flex justify-between text-gray-600">
+                <span>Tạm tính</span>
+                <span className="font-medium">{subtotal.toLocaleString('vi-VN')}đ</span>
               </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-orange-600">
-                  <span>Giảm giá</span>
-                  <span>- ₫ {discount.toLocaleString('vi-VN')}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-lg pt-2 border-t border-gray-200">
-                <span>Tổng cộng</span>
-                <span className="text-red-600">₫ {total.toLocaleString('vi-VN')}</span>
+              
+              <div className="flex justify-between text-xl pt-3 border-t border-gray-100 font-bold items-end">
+                <span className="text-gray-800">Tổng cộng</span>
+                <span className="text-red-600 text-2xl">{total.toLocaleString('vi-VN')}đ</span>
               </div>
             </div>
 
             <button
-              onClick={() => onCheckout(appliedVoucher)}
-              className="w-full bg-red-600 text-white py-4 rounded-xl hover:bg-red-700 transition-colors"
+              onClick={() => onCheckout()}
+              className="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-700 active:scale-[0.98] transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2"
             >
-              Đặt hàng
+              <span>Tiến hành đặt hàng</span>
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Voucher Modal */}
-      {showVoucherModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end md:items-center md:justify-center">
-          <div className="bg-white w-full md:max-w-lg md:rounded-xl max-h-[80vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
-              <h2 className="text-lg">Chọn mã giảm giá</h2>
-              <button
-                onClick={() => setShowVoucherModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-3">
-              {vouchers.map(voucher => {
-                const canApply = subtotal >= voucher.min_order_value;
-                const discountValue = calculateVoucherDiscount(voucher, subtotal);
-
-                return (
-                  <button
-                    key={voucher.voucher_code}
-                    onClick={() => canApply && handleApplyVoucher(voucher)}
-                    disabled={!canApply}
-                    className={`w-full text-left border rounded-xl p-4 transition-all ${
-                      canApply
-                        ? 'border-orange-300 bg-orange-50 hover:bg-orange-100 cursor-pointer'
-                        : 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-                    } ${appliedVoucher?.voucher_code === voucher.voucher_code ? 'ring-2 ring-orange-500' : ''}`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Tag size={18} className={canApply ? 'text-orange-600' : 'text-gray-400'} />
-                        <span className="font-mono text-sm">{voucher.voucher_code}</span>
-                      </div>
-                      {canApply && discountValue > 0 && (
-                        <span className="text-orange-600 text-sm">
-                          - ₫ {discountValue.toLocaleString('vi-VN')}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mb-1">{voucher.voucher_name}</p>
-                    <p className="text-xs text-gray-600">
-                      Đơn tối thiểu: ₫ {voucher.min_order_value.toLocaleString('vi-VN')}
-                    </p>
-                    {voucher.expiry_date && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        HSD: {new Date(voucher.expiry_date).toLocaleDateString('vi-VN')}
-                      </p>
-                    )}
-                    {!canApply && (
-                      <p className="text-xs text-red-500 mt-1">
-                        Thêm ₫ {(voucher.min_order_value - subtotal).toLocaleString('vi-VN')} để áp dụng
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
       )}

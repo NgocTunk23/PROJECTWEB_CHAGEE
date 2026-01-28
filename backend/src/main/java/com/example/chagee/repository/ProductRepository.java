@@ -5,13 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+
 @Repository
-// Repository cho Entity Product - dùng để tương tác với DATABASE
-public interface ProductRepository extends JpaRepository<Product, String> { // Người quản lý cho đối tượng Product với kiểu khóa chính là kiểu string
+public interface ProductRepository extends JpaRepository<Product, String> { // Khóa chính là String (productid)
+
     // 1. Lấy danh sách category không trùng lặp
-    @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL") // Đây là câu lệnh sql
+    // Lưu ý: "p.category" ở đây tham chiếu đến thuộc tính "category" trong Entity Product
+    @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
     List<String> findDistinctCategories();
     
-    // 2. Lọc theo category - SELECT * FROM Products WHERE category = 'Trà sữa'
+    // 2. Lọc theo category
+    // Spring tự động map "Category" -> thuộc tính "category" trong Entity
     List<Product> findByCategory(String category);
 }

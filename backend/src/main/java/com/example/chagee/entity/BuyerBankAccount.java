@@ -13,29 +13,30 @@ public class BuyerBankAccount {
     // ========================================================================
     @Embeddable
     public static class Id implements Serializable {
-        private String buyerUsername;
-        @Column(name = "bank_name") // Map rõ tên cột vì tên biến kiểu lạc đà
-        private String bankName;
-        @Column(name = "account_number")
-        private String accountNumber;
+        @Column(name = "buyerusername")
+        private String buyerusername;
+        @Column(name = "bankname") // Map rõ tên cột vì tên biến kiểu lạc đà
+        private String bankname;
+        @Column(name = "accountnumber")
+        private String accountnumber;
 
         public Id() {}
 
-        public Id(String buyerUsername, String bankName, String accountNumber) {
-            this.buyerUsername = buyerUsername;
-            this.bankName = bankName;
-            this.accountNumber = accountNumber;
+        public Id(String buyerusername, String bankname, String accountnumber) {
+            this.buyerusername = buyerusername;
+            this.bankname = bankname;
+            this.accountnumber = accountnumber;
         }
 
         // --- Getters & Setters cho ID ---
-        public String getBuyerUsername() { return buyerUsername; }
-        public void setBuyerUsername(String buyerUsername) { this.buyerUsername = buyerUsername; }
+        public String getbuyerusername() { return buyerusername; }
+        public void setbuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
 
-        public String getBankName() { return bankName; }
-        public void setBankName(String bankName) { this.bankName = bankName; }
+        public String getbankname() { return bankname; }
+        public void setbankname(String bankname) { this.bankname = bankname; }
 
-        public String getAccountNumber() { return accountNumber; }
-        public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+        public String getaccountnumber() { return accountnumber; }
+        public void setaccountnumber(String accountnumber) { this.accountnumber = accountnumber; }
 
         // --- Bắt buộc phải có equals và hashCode ---
         @Override
@@ -43,14 +44,14 @@ public class BuyerBankAccount {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Id id = (Id) o;
-            return Objects.equals(buyerUsername, id.buyerUsername) &&
-                    Objects.equals(bankName, id.bankName) &&
-                    Objects.equals(accountNumber, id.accountNumber);
+            return Objects.equals(buyerusername, id.buyerusername) &&
+                    Objects.equals(bankname, id.bankname) &&
+                    Objects.equals(accountnumber, id.accountnumber);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(buyerUsername, bankName, accountNumber);
+            return Objects.hash(buyerusername, bankname, accountnumber);
         }
     }
 
@@ -62,23 +63,23 @@ public class BuyerBankAccount {
     private Id id;
 
     @ManyToOne
-    @MapsId("buyerUsername") // Map tới thuộc tính buyerUsername trong Id
-    @JoinColumn(name = "buyer_username")
+    @MapsId("buyerusername") // Map tới thuộc tính buyerusername trong Id
+    @JoinColumn(name = "buyerusername")
     private Buyer buyer;
 
-    @Column(name = "card_type")
-    private String cardType;
+    @Column(name = "cardtype")
+    private String cardtype;
 
     // ========================================================================
     // 3. CONSTRUCTORS
     // ========================================================================
     public BuyerBankAccount() {}
 
-    public BuyerBankAccount(Buyer buyer, String bankName, String accountNumber, String cardType) {
+    public BuyerBankAccount(Buyer buyer, String bankname, String accountnumber, String cardType) {
         this.buyer = buyer;
-        this.cardType = cardType;
+        this.cardtype = cardType;
         // Tự động tạo ID từ các thông tin đầu vào
-        this.id = new Id(buyer.getUsername(), bankName, accountNumber);
+        this.id = new Id(buyer.getUsername(), bankname, accountnumber);
     }
 
     // ========================================================================
@@ -102,25 +103,25 @@ public class BuyerBankAccount {
         // Logic tự động cập nhật ID khi set Buyer
         if (buyer != null) {
             if (this.id == null) this.id = new Id();
-            this.id.setBuyerUsername(buyer.getUsername());
+            this.id.setbuyerusername(buyer.getUsername());
         }
     }
 
     public String getCardType() {
-        return cardType;
+        return cardtype;
     }
 
     public void setCardType(String cardType) {
-        this.cardType = cardType;
+        this.cardtype = cardType;
     }
     
-    // Các helper method để lấy bankName và accountNumber tiện hơn
-    // (Thay vì phải gọi entity.getId().getBankName())
-    public String getBankName() {
-        return id != null ? id.getBankName() : null;
+    // Các helper method để lấy bankname và accountnumber tiện hơn
+    // (Thay vì phải gọi entity.getId().getbankname())
+    public String getbankname() {
+        return id != null ? id.getbankname() : null;
     }
     
-    public String getAccountNumber() {
-        return id != null ? id.getAccountNumber() : null;
+    public String getaccountnumber() {
+        return id != null ? id.getaccountnumber() : null;
     }
 }

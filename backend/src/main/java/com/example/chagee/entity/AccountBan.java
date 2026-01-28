@@ -2,7 +2,7 @@ package com.example.chagee.entity;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Objects;
 
 @Entity
@@ -14,36 +14,38 @@ public class AccountBan {
     // ========================================================================
     @Embeddable
     public static class Id implements Serializable {
-        private String adminUsername;
-        private String buyerUsername;
+        @Column(name = "adminusername")
+        private String adminusername;
 
-        // --- Bắt buộc phải có Constructor mặc định ---
+        @Column(name = "buyerusername")
+        private String buyerusername;
+
         public Id() {}
 
-        public Id(String adminUsername, String buyerUsername) {
-            this.adminUsername = adminUsername;
-            this.buyerUsername = buyerUsername;
+        public Id(String adminusername, String buyerusername) {
+            this.adminusername = adminusername;
+            this.buyerusername = buyerusername;
         }
 
-        // --- Bắt buộc phải có Getter & Setter ---
-        public String getAdminUsername() { return adminUsername; }
-        public void setAdminUsername(String adminUsername) { this.adminUsername = adminUsername; }
+        // --- Getters & Setters theo tên viết liền ---
+        public String getAdminusername() { return adminusername; }
+        public void setAdminusername(String adminusername) { this.adminusername = adminusername; }
 
-        public String getBuyerUsername() { return buyerUsername; }
-        public void setBuyerUsername(String buyerUsername) { this.buyerUsername = buyerUsername; }
+        public String getBuyerusername() { return buyerusername; }
+        public void setBuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
 
-        // --- QUAN TRỌNG: Phải có equals và hashCode để so sánh ID ---
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Id id = (Id) o;
-            return  Objects.equals(adminUsername, id.adminUsername) && Objects.equals(buyerUsername, id.buyerUsername);
+            return Objects.equals(adminusername, id.adminusername) && 
+                   Objects.equals(buyerusername, id.buyerusername);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(adminUsername, buyerUsername);
+            return Objects.hash(adminusername, buyerusername);
         }
     }
 
@@ -55,39 +57,40 @@ public class AccountBan {
     private Id id;
 
     @ManyToOne
-    @MapsId("adminUsername") // Map với biến adminUsername trong class Id ở trên
-    @JoinColumn(name = "admin_username")
+    @MapsId("adminusername") 
+    @JoinColumn(name = "adminusername")
     private Admin admin;
 
     @ManyToOne
-    @MapsId("buyerUsername") // Map với biến buyerUsername trong class Id ở trên
-    @JoinColumn(name = "buyer_username")
+    @MapsId("buyerusername") 
+    @JoinColumn(name = "buyerusername")
     private Buyer buyer;
 
-    @Column(name = "ban_time")
-    private LocalDateTime banTime;
+    @Column(name = "bantime") // Khớp: bantime DATETIME
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date bantime;
 
-    @Column(name = "reason")
+    @Column(name = "reason") // Khớp: reason NVARCHAR(255)
     private String reason;
 
     // ========================================================================
     // 3. CONSTRUCTORS
     // ========================================================================
     
-    public AccountBan() {}
+    public AccountBan() {
+        this.bantime = new Date();
+    }
 
-    // Constructor tiện lợi: Truyền object vào, tự động tạo ID luôn
     public AccountBan(Admin admin, Buyer buyer, String reason) {
         this.admin = admin;
         this.buyer = buyer;
         this.reason = reason;
-        this.banTime = LocalDateTime.now();
-        // Tự động tạo ID từ 2 object này
+        this.bantime = new Date();
         this.id = new Id(admin.getUsername(), buyer.getUsername());
     }
 
     // ========================================================================
-    // 4. GETTERS & SETTERS CHO ENTITY
+    // 4. GETTERS & SETTERS (Đã đổi tên theo biến viết liền)
     // ========================================================================
 
     public Id getId() { return id; }
@@ -96,25 +99,23 @@ public class AccountBan {
     public Admin getAdmin() { return admin; }
     public void setAdmin(Admin admin) {
         this.admin = admin;
-        // Cập nhật lại ID nếu set Admin mới
         if (admin != null) {
             if (this.id == null) this.id = new Id();
-            this.id.setAdminUsername(admin.getUsername());
+            this.id.setAdminusername(admin.getUsername());
         }
     }
 
     public Buyer getBuyer() { return buyer; }
     public void setBuyer(Buyer buyer) {
         this.buyer = buyer;
-        // Cập nhật lại ID nếu set Buyer mới
         if (buyer != null) {
             if (this.id == null) this.id = new Id();
-            this.id.setBuyerUsername(buyer.getUsername());
+            this.id.setBuyerusername(buyer.getUsername());
         }
     }
 
-    public LocalDateTime getBanTime() { return banTime; }
-    public void setBanTime(LocalDateTime banTime) { this.banTime = banTime; }
+    public Date getBantime() { return bantime; }
+    public void setBantime(Date bantime) { this.bantime = bantime; }
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }

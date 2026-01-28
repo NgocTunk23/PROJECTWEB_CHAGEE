@@ -1,14 +1,14 @@
 import apiClient from "./apiClient";
 
-// Định nghĩa kiểu dữ liệu khớp với Entity Product trong Java
+// Trong file productService.ts hoặc nơi khai báo interface
 export interface ProductAPI {
-  productId: string;
-  productName: string;
-  displayPrice: number;
-  productImage: string;
-  description: string;
-  category: string;
-  soldQuantity?: number; // Dấu ? nghĩa là có thể null
+    productid: string;      // Sửa productId -> productid
+    productname: string;    // Sửa productName -> productname
+    description: string;   // Sửa description -> descriptionU (như bạn đã thấy ở bước trước)
+    displayprice: number;   // Sửa displayPrice -> displayprice
+    productimage: string;   // Sửa productImage -> productimage
+    category: string;
+    soldquantity?: number;  // Sửa soldQuantity -> soldquantity
 }
 
 export const ProductService = {

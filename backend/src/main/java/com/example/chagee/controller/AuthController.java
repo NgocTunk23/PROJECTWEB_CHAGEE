@@ -31,69 +31,64 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
-    // --- API ĐĂNG NHẬP (LOGIC TÌM KIẾM ĐA BẢNG) ---
+    // --- API ĐĂNG NHẬP ---
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         String username = loginRequest.getUsername();
         String password = loginRequest.getPassword();
 
-        // BƯỚC 1: Kiểm tra trong bảng ADMIN trước
+        // BƯỚC 1: Kiểm tra trong bảng ADMIN
         Optional<Admin> adminOpt = adminRepository.findByUsername(username);
         
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
-            // Kiểm tra mật khẩu (Dùng encoder.matches nếu đã mã hóa, hoặc equals nếu chưa)
+            // passwordU: Khớp với entity Admin
             if (encoder.matches(password, admin.getPassword())) {
-                // Xác định Role dựa trên permission_level
-                String role = "STAFF"; // Mặc định level 1
-                if (admin.getPermissionLevel() != null && admin.getPermissionLevel() == 10) {
+                String role = "STAFF"; 
+                if (admin.getPermissionlevel() != null && admin.getPermissionlevel() == 10) {
                     role = "ADMIN";
                 }
                 
                 String token = jwtUtils.generateToken(admin.getUsername(), role);
-                // Admin không có điểm thưởng -> rewardPoints = 0
                 return ResponseEntity.ok(new JwtResponse(token, admin.getUsername(), role, 0));
             }
         }
 
-        // BƯỚC 2: Nếu không phải Admin, kiểm tra bảng BUYER
+        // BƯỚC 2: Kiểm tra bảng BUYER
         Optional<Buyer> buyerOpt = buyerRepository.findByUsername(username);
-        // Lưu ý: Nếu user nhập SĐT để login thì dùng buyerRepository.findByPhone(username)
         
         if (buyerOpt.isPresent()) {
             Buyer buyer = buyerOpt.get();
+            // passwordU: Khớp với entity Buyer
             if (encoder.matches(password, buyer.getPassword())) {
-                String role = "CUSTOMER"; // Level 0
+                String role = "CUSTOMER"; 
                 String token = jwtUtils.generateToken(buyer.getUsername(), role);
                 
-                // Lấy điểm thưởng từ Buyer (xử lý null an toàn)
-                int points = buyer.getRewardPoints() != null ? buyer.getRewardPoints() : 0;
+                // rewardpoints: Khớp với entity Buyer
+                int points = buyer.getRewardpoints() != null ? buyer.getRewardpoints() : 0;
                 
                 return ResponseEntity.ok(new JwtResponse(token, buyer.getUsername(), role, points));
             }
         }
 
-        // Nếu không tìm thấy ở cả 2 bảng hoặc sai mật khẩu
         return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid username or password!"));
     }
 
     // --- API ĐĂNG KÝ (Cho Buyer) ---
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        // Kiểm tra trùng SĐT (dùng làm username)
-        if (buyerRepository.existsByPhonenumber(signUpRequest.getPhone())) {
+        // existsByPhonenumber: Cần đảm bảo Repository có method này
+        if (buyerRepository.existsByPhonenumber(signUpRequest.getPhonenumber())) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Phone number is already taken!"));
         }
 
         Buyer user = new Buyer();
-        user.setPermissionLevel(0); // Mặc định Customer
-        
-        // Logic: Lấy SĐT làm username luôn cho tiện
-        user.setUsername(signUpRequest.getPhone()); 
-        user.setFullName(signUpRequest.getName());
-        user.setPhone(signUpRequest.getPhone());
+        user.setPermissionlevel(0); 
+        user.setUsername(signUpRequest.getPhonenumber()); // Dùng SĐT làm username
+        user.setFullname(signUpRequest.getFullname());
+        user.setPhonenumber(signUpRequest.getPhonenumber());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setRewardPoints(0); // Mặc định 0 điểm khi mới tạo
+        user.setRewardpoints(0); 
 
         buyerRepository.save(user);
 
@@ -107,7 +102,6 @@ public class AuthController {
         @NotBlank
         private String password;
         
-        // Getters/Setters
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
         public String getPassword() { return password; }
@@ -116,17 +110,16 @@ public class AuthController {
 
     public static class SignupRequest {
         @NotBlank
-        private String name;
+        private String fullname; // Đổi từ name -> fullname
         @NotBlank
-        private String phone;
+        private String phonenumber; // Đổi từ phone -> phonenumber
         @NotBlank
         private String password;
         
-        // Getters/Setters
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getPhone() { return phone; }
-        public void setPhone(String phone) { this.phone = phone; }
+        public String getFullname() { return fullname; }
+        public void setFullname(String fullname) { this.fullname = fullname; }
+        public String getPhonenumber() { return phonenumber; }
+        public void setPhonenumber(String phonenumber) { this.phonenumber = phonenumber; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
     }
@@ -136,30 +129,25 @@ public class AuthController {
         private String type = "Bearer";
         private String username;
         private String role;
-        private int rewardPoints; // Thêm trường điểm thưởng
+        private int rewardpoints; // Đổi từ rewardPoints -> rewardpoints
         
-        public JwtResponse(String accessToken, String username, String role, int rewardPoints) {
+        public JwtResponse(String accessToken, String username, String role, int rewardpoints) {
             this.token = accessToken;
             this.username = username;
             this.role = role;
-            this.rewardPoints = rewardPoints;
+            this.rewardpoints = rewardpoints;
         }
         
-        // Getters & Setters
         public String getToken() { return token; }
         public void setToken(String token) { this.token = token; }
-        
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
-
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
-
         public String getRole() { return role; }
         public void setRole(String role) { this.role = role; }
-        
-        public int getRewardPoints() { return rewardPoints; }
-        public void setRewardPoints(int rewardPoints) { this.rewardPoints = rewardPoints; }
+        public int getRewardpoints() { return rewardpoints; }
+        public void setRewardpoints(int rewardpoints) { this.rewardpoints = rewardpoints; }
     }
 
     public static class MessageResponse {

@@ -8,12 +8,11 @@ import java.util.Optional;
 @Repository
 public interface BuyerRepository extends JpaRepository<Buyer, String> {
     
-    // Tìm kiếm Buyer bằng username (dùng cho Login)
-    // Trả về Optional để tránh lỗi NullPointerException
+    // Spring tự động map với thuộc tính "username" trong Entity
     Optional<Buyer> findByUsername(String username);
 
-    // --- DÒNG NÀY SẼ SỬA LỖI CỦA BẠN ---
-    // Kiểm tra xem số điện thoại đã tồn tại trong DB chưa (dùng cho Register)
-    Boolean existsByPhonenumber(String phonenumber);
-    
+    // ✅ CHÍNH XÁC: "Phonenumber" khớp với thuộc tính "phonenumber" trong Entity
+    // Nếu bạn viết "PhoneNumber" (chữ N hoa) sẽ bị lỗi vì Entity không có biến đó.
+    boolean existsByPhonenumber(String phonenumber);
+
 }

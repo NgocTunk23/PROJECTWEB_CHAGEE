@@ -1,67 +1,108 @@
-// File: backend/src/main/java/com/example/chagee/entity/Buyer.java
 package com.example.chagee.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
-@Table(name = "Buyers")
+@Table(name = "Buyers") // Khớp: Buyers
 public class Buyer {
+
     @Id
-    @Column(length = 50)
+    @Column(name = "username") // Khớp: username VARCHAR(255)
     private String username;
 
-    @Column(name = "passwordU", nullable = false)
+    @Column(name = "passwordU", nullable = false) // Khớp: passwordU VARCHAR(255)
     private String password;
 
-    @Column(unique = true)
+    @Column(name = "email", unique = true) // Khớp: email VARCHAR(100)
     private String email;
-    @Column(name = "phonenumber")
+
+    @Column(name = "phonenumber") // Khớp: phonenumber VARCHAR(20)
     private String phonenumber;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @Column(name = "full_name")
-    private String fullName;
+    @Column(name = "createdat") // Khớp: createdat DATETIME
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdat;
 
-    // --- THÊM TRƯỜNG NÀY ---
-    @Column(name = "permission_level", columnDefinition = "int default 0")
-    private Integer permissionLevel;
+    @Column(name = "fullname") // Khớp: fullname NVARCHAR(100)
+    private String fullname;
 
-    public Buyer() {}
+    @Column(name = "dob") // Khớp: dob DATE
+    @Temporal(TemporalType.DATE)
+    private Date dob;
 
+    @Column(name = "avatarlink", columnDefinition = "VARCHAR(MAX)") // Khớp: avatarlink VARCHAR(MAX)
+    private String avatarlink;
 
-    // Getters & Setters
+    @Column(name = "gender", length = 10) // Khớp: gender NVARCHAR(10)
+    private String gender;
+
+    @Column(name = "permissionlevel") // Khớp: permissionlevel INT
+    private Integer permissionlevel;
+
+    @Column(name = "rewardpoints") // Khớp: rewardpoints INT
+    private Integer rewardpoints;
+
+    @Column(name = "loyaltycode") // Khớp: loyaltycode VARCHAR(255)
+    private String loyaltycode;
+
+    @Column(name = "membershiptier") // Khớp: membershiptier NVARCHAR(255)
+    private String membershiptier;
+
+    public Buyer() {
+        this.createdat = new Date();
+        this.membershiptier = "Member";
+        this.rewardpoints = 0;
+        this.permissionlevel = 0;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdat == null) this.createdat = new Date();
+        if (this.permissionlevel == null) this.permissionlevel = 0;
+        if (this.rewardpoints == null) this.rewardpoints = 0;
+        if (this.membershiptier == null) this.membershiptier = "Member";
+    }
+
+    // ========================================================================
+    // GETTERS & SETTERS (Đã đổi tên theo biến viết liền)
+    // ========================================================================
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public String getPhone() { return phonenumber; }
-    public void setPhone(String phone) { this.phonenumber = phone; }
-
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-
-    public Integer getPermissionLevel() { return permissionLevel; }
-    public void setPermissionLevel(Integer permissionLevel) { this.permissionLevel = permissionLevel; }
-
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    @Column(name = "reward_points", columnDefinition = "int default 0")
-    private Integer rewardPoints;
+    public String getPhonenumber() { return phonenumber; }
+    public void setPhonenumber(String phonenumber) { this.phonenumber = phonenumber; }
 
-    // Getter & Setter
-    public Integer getRewardPoints() { return rewardPoints; }
-    public void setRewardPoints(Integer rewardPoints) { this.rewardPoints = rewardPoints; }
-    
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.permissionLevel == null) this.permissionLevel = 0;
-        if (this.rewardPoints == null) this.rewardPoints = 0; // Mặc định 0 điểm
-    }
+    public Date getCreatedat() { return createdat; }
+    public void setCreatedat(Date createdat) { this.createdat = createdat; }
+
+    public String getFullname() { return fullname; }
+    public void setFullname(String fullname) { this.fullname = fullname; }
+
+    public Date getDob() { return dob; }
+    public void setDob(Date dob) { this.dob = dob; }
+
+    public String getAvatarlink() { return avatarlink; }
+    public void setAvatarlink(String avatarlink) { this.avatarlink = avatarlink; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public Integer getPermissionlevel() { return permissionlevel; }
+    public void setPermissionlevel(Integer permissionlevel) { this.permissionlevel = permissionlevel; }
+
+    public Integer getRewardpoints() { return rewardpoints; }
+    public void setRewardpoints(Integer rewardpoints) { this.rewardpoints = rewardpoints; }
+
+    public String getLoyaltycode() { return loyaltycode; }
+    public void setLoyaltycode(String loyaltycode) { this.loyaltycode = loyaltycode; }
+
+    public String getMembershiptier() { return membershiptier; }
+    public void setMembershiptier(String membershiptier) { this.membershiptier = membershiptier; }
 }

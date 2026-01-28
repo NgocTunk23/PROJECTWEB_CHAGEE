@@ -1,15 +1,19 @@
 # TẮT DOCKER
-docker-compose down
+docker compose down
+
+docker-compose down -v
 # BUILD DOCKER
-docker-compose up --build
+docker compose up --build
 # DÀNH ĐỌC LOG
-docker-compose up
+docker compose up
 
 # FOR WSL
-docker exec -i sql_container /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Password123!" -C < ./database/init_db.sql
+docker exec -i sql_container /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Password123!" -C -f 65001 < ./database/init_db.sql
+
 # FOR MAC
 docker exec -i sql_container /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Password123!' -C < ./database/init_db.sql
 
+docker exec -it sql_container /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Password123!" -C -Q "SELECT TOP 1 productname FROM chagee_db.dbo.Products"
 # KHỞI ĐỘNG BE
 docker restart backend_container
 

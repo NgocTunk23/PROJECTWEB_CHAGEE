@@ -42,7 +42,7 @@ public class UserDetailsImpl implements UserDetails {
                 buyer.getUsername(),
                 buyer.getEmail(),
                 buyer.getPassword(),
-                buyer.getRewardPoints() != null ? buyer.getRewardPoints() : 0, // <--- Lấy điểm từ Buyer
+                buyer.getRewardpoints() != null ? buyer.getRewardpoints() : 0, // <--- Lấy điểm từ Buyer
                 authorities);
     }
 

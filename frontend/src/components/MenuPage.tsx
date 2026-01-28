@@ -13,13 +13,12 @@ interface MenuPageProps {
 }
 
 export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddToCart, cartItems, onOpenCart }: MenuPageProps) {
-  // State quản lý dữ liệu API
   const [categories, setCategories] = useState<string[]>([]);
   const [products, setProducts] = useState<ProductAPI[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>(""); 
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- 1. Fetch dữ liệu ban đầu ---
+  // --- 1. Fetch dữ liệu từ API ---
   useEffect(() => {
     const initData = async () => {
       try {
@@ -28,8 +27,10 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
           ProductService.getCategories(),
           ProductService.getProducts() 
         ]);
+        console.log("Dữ liệu API trả về:", prodsData);
         setCategories(catsData);
         setProducts(prodsData);
+        // Chọn category đầu tiên nếu có
         if (catsData.length > 0) setSelectedCategory(catsData[0]);
       } catch (error) {
         console.error("Lỗi kết nối Backend:", error);
@@ -40,7 +41,7 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
     initData();
   }, []);
 
-  // --- 2. Lọc theo danh mục ---
+  // --- 2. Lọc món theo danh mục ---
   const handleCategoryClick = async (category: string) => {
     setSelectedCategory(category);
     try {
@@ -97,7 +98,7 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
       </header>
 
       <div className="flex">
-        {/* Sidebar - Desktop */}
+        {/* Sidebar - Danh mục */}
         <aside className="hidden lg:block w-64 border-r border-gray-100 h-[calc(100vh-180px)] sticky top-[180px] overflow-y-auto">
           <nav className="p-4 space-y-1">
             {categories.map(category => (
@@ -123,7 +124,7 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
             
             {isLoading ? (
                <div className="flex justify-center items-center h-40">
-                 <p className="text-gray-500">Đang tải dữ liệu từ Server...</p>
+                 <p className="text-gray-500">Đang tải menu...</p>
                </div>
             ) : (
               <div className="space-y-4">
@@ -131,14 +132,23 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
                     <p className="text-gray-500 text-center">Không tìm thấy món nào.</p>
                 ) : (
                     products.map(product => {
+                    // ✅ MAP DATA TRỰC TIẾP TỪ API (KHÔNG HARD CODE)
+                    // Dựa vào Product.java:
+                    // getProductName() -> productName
+                    // getDescription() -> description
+                    // getDisplayPrice() -> displayPrice
                     const productUI = {
-                        id: product.productId, // ID thật từ DB
-                        name: product.productName,
-                        description: product.description || "Hương vị tuyệt hảo",
-                        price: product.displayPrice,
-                        image: product.productImage || 'https://placehold.co/150?text=No+Image', 
-                        category: product.category,
-                        isBestseller: (product.soldQuantity || 0) > 100
+                        // Bên trái (id): Tên React dùng
+                        // Bên phải (product.xxx): Tên API trả về (Phải đúng từng chữ cái)
+                        
+                        id: product.productid,          // ✅ Sửa productId -> productid
+                        name: product.productname,      // ✅ Sửa productName -> productname
+                        description: product.description, // ✅ Sửa description -> descriptionU
+                        price: product.displayprice,    // ✅ Sửa displayPrice -> displayprice
+                        image: product.productimage,    // ✅ Sửa productImage -> productimage
+                        
+                        category: product.category,     // Cái này thường viết thường sẵn rồi
+                        isBestseller: (product.soldquantity || 0) > 100 // ✅ Sửa soldQuantity -> soldquantity
                     };
                     
                     return (
@@ -147,20 +157,33 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
                         className="flex gap-4 bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => onProductClick(productUI)}
                         >
+                        {/* Ảnh sản phẩm: Sử dụng ảnh từ API, nếu lỗi thì hiện ảnh placeholder */}
                         <img
-                            src={productUI.image}
+                            src={productUI.image || 'https://placehold.co/150?text=No+Image'}
                             alt={productUI.name}
                             className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.onerror = null;
+                                // Fallback image khi ảnh lỗi link
                                 target.src = 'https://placehold.co/150?text=No+Image';
                             }}
                         />
                         
                         <div className="flex-1 min-w-0">
                             <h3 className="mb-1 font-semibold">{productUI.name}</h3>
-                            <p className="text-xs text-gray-500 mb-2 line-clamp-2">{productUI.description}</p>
+                            
+                            {/* Mô tả: Chỉ hiện nếu có dữ liệu từ DB */}
+                            {productUI.description ? (
+                                <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+                                    {productUI.description}
+                                </p>
+                            ) : (
+                                <p className="text-xs text-gray-400 mb-2 italic">
+                                    Chưa có mô tả
+                                </p>
+                            )}
+
                             <div className="flex items-center gap-2 mb-2">
                             {productUI.isBestseller && (
                                 <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
@@ -175,20 +198,17 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
                             </div>
                         </div>
                         
-                        {/* NÚT THÊM VÀO GIỎ (Đã cập nhật logic) */}
+                        {/* Nút thêm vào giỏ */}
                         <button 
                           className="w-10 h-10 bg-blue-900 text-white rounded-lg flex items-center justify-center hover:bg-blue-800 flex-shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             
-                            // 1. Kiểm tra đã chọn cửa hàng chưa
                             if (!selectedStore) {
                               onSelectStore();
                               return;
                             }
 
-                            // 2. Tạo object chuẩn bị gửi API
-                            // Lưu ý: ID ở đây là tạm thời, Backend sẽ sinh ID cart detail mới
                             const cartItem = {
                               id: `temp_${Date.now()}`, 
                               product: productUI,
@@ -196,7 +216,7 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
                               image: productUI.image,
                               price: productUI.price,
                               
-                              // Mặc định cho nút thêm nhanh
+                              // Các tùy chọn mặc định khi thêm nhanh (Có thể sửa sau nếu có API options)
                               size: "M",
                               sugar: "100%",
                               ice: "Bình thường",
@@ -205,7 +225,6 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
                               store: selectedStore
                             };
                             
-                            // 3. Gọi hàm từ App.tsx (sẽ trigger API call)
                             onAddToCart(cartItem);
                           }}
                         >

@@ -4,47 +4,55 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "Vouchers")
+@Table(name = "Vouchers") // Khớp: Vouchers
 public class Voucher {
+
     @Id
-    @Column(name = "voucher_code", length = 50)
-    private String voucherCode;
+    @Column(name = "vouchercode", length = 255) // Khớp: vouchercode VARCHAR(255)
+    private String vouchercode;
 
-    @Column(name = "voucher_name", length = 100)
-    private String voucherName;
+    @Column(name = "vouchername", length = 100) // Khớp: vouchername NVARCHAR(100)
+    private String vouchername;
 
-    @Column(name = "discount_amount")
-    private BigDecimal discountAmount;
+    @Column(name = "discountamount") // Khớp: discountamount DECIMAL(18, 2)
+    private BigDecimal discountamount;
 
-    @Column(name = "discount_percentage")
-    private Integer discountPercentage;
+    @Column(name = "discountpercentage") // Khớp: discountpercentage INT
+    private Integer discountpercentage;
 
-    @Column(name = "max_discount")
-    private BigDecimal maxDiscount;
+    @Column(name = "maxdiscount") // Khớp: maxdiscount DECIMAL(18, 2)
+    private BigDecimal maxdiscount;
 
-    @Column(name = "min_order_value")
-    private BigDecimal minOrderValue;
+    @Column(name = "minordervalue") // Khớp: minordervalue DECIMAL(18, 2)
+    private BigDecimal minordervalue;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
-    private Admin createdBy;
+    @JoinColumn(name = "createdby") // Khớp: createdby VARCHAR(255) trỏ tới Admins
+    private Admin createdby;
 
-    // Constructors
     public Voucher() {}
 
-    // Getters & Setters
-    public String getVoucherCode() { return voucherCode; }
-    public void setVoucherCode(String voucherCode) { this.voucherCode = voucherCode; }
-    public String getVoucherName() { return voucherName; }
-    public void setVoucherName(String voucherName) { this.voucherName = voucherName; }
-    public BigDecimal getDiscountAmount() { return discountAmount; }
-    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
-    public Integer getDiscountPercentage() { return discountPercentage; }
-    public void setDiscountPercentage(Integer discountPercentage) { this.discountPercentage = discountPercentage; }
-    public BigDecimal getMaxDiscount() { return maxDiscount; }
-    public void setMaxDiscount(BigDecimal maxDiscount) { this.maxDiscount = maxDiscount; }
-    public BigDecimal getMinOrderValue() { return minOrderValue; }
-    public void setMinOrderValue(BigDecimal minOrderValue) { this.minOrderValue = minOrderValue; }
-    public Admin getCreatedBy() { return createdBy; }
-    public void setCreatedBy(Admin createdBy) { this.createdBy = createdBy; }
+    // ========================================================================
+    // GETTERS & SETTERS (Đã đổi tên theo biến viết liền)
+    // ========================================================================
+    public String getVouchercode() { return vouchercode; }
+    public void setVouchercode(String vouchercode) { this.vouchercode = vouchercode; }
+
+    public String getVouchername() { return vouchername; }
+    public void setVouchername(String vouchername) { this.vouchername = vouchername; }
+
+    public BigDecimal getDiscountamount() { return discountamount; }
+    public void setDiscountamount(BigDecimal discountamount) { this.discountamount = discountamount; }
+
+    public Integer getDiscountpercentage() { return discountpercentage; }
+    public void setDiscountpercentage(Integer discountpercentage) { this.discountpercentage = discountpercentage; }
+
+    public BigDecimal getMaxdiscount() { return maxdiscount; }
+    public void setMaxdiscount(BigDecimal maxdiscount) { this.maxdiscount = maxdiscount; }
+
+    public BigDecimal getMinordervalue() { return minordervalue; }
+    public void setMinordervalue(BigDecimal minordervalue) { this.minordervalue = minordervalue; }
+
+    public Admin getCreatedby() { return createdby; }
+    public void setCreatedby(Admin createdby) { this.createdby = createdby; }
 }
