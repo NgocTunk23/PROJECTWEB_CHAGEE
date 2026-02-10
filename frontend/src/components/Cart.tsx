@@ -5,8 +5,8 @@ interface CartProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
-  onUpdateQuantity: (index: number, quantity: number) => void;
-  onRemoveItem: (index: number) => void;
+  onUpdateQuantity: (id: string, quantity: number) => void;
+  onRemoveItem: (id: string) => void;
   totalPrice: number;
 }
 
@@ -67,8 +67,11 @@ export function Cart({
                         {item.product.name}
                         </h4>
                         <button
-                            onClick={() => onRemoveItem(index)}
+                            // onClick={() => onRemoveItem(index)}
+                            // className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            onClick={() => onRemoveItem(item.id)}
                             className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            title="Xóa món này"
                         >
                             <Trash2 size={18} />
                         </button>
@@ -90,7 +93,7 @@ export function Cart({
                       <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1 border border-gray-200">
                         <button
                           onClick={() =>
-                            onUpdateQuantity(index, item.quantity - 1)
+                            onUpdateQuantity(item.id, item.quantity - 1)
                           }
                           className="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm hover:bg-gray-50 transition-colors"
                         >
@@ -99,7 +102,7 @@ export function Cart({
                         <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
                         <button
                           onClick={() =>
-                            onUpdateQuantity(index, item.quantity + 1)
+                            onUpdateQuantity(item.id, item.quantity + 1)
                           }
                           className="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm hover:bg-gray-50 transition-colors"
                         >

@@ -23,6 +23,10 @@ export interface Product {
   image: string;
   description?: string;
   category?: string;
+  
+  // 👇 THÊM 2 DÒNG NÀY:
+  nameVi?: string;
+  descriptionVi?: string;
 }
 
 export interface Store {
@@ -194,83 +198,89 @@ function App() {
   };
 
   const handleConfirmOrder = async (orderData: OrderData) => {
-    if (cartItems.length === 0 || !selectedStore || !currentUser) return;
+    if (cartItems.length === 0 || !selectedStore || !currentUser) return;
 
-    // 1. Tính tổng tiền
-    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const finalTotal = subtotal; 
+    // 1. Tính tổng tiền
+    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const finalTotal = subtotal; 
 
-    // 2. Chuẩn bị payload gửi đi
-    const orderPayload = {
-      user_id: currentUser.id,
-      total_price: finalTotal,
-      phone: orderData.customerPhone,
-      address: selectedStore.address,
-      note: orderData.note,
-      items: cartItems.map(item => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-          price: item.price,
-          note: `${item.size} | ${item.sugar} | ${item.ice}`,
-      }))
-    };
+    // 2. Chuẩn bị payload gửi đi
+    const orderPayload = {
+      user_id: currentUser.id,
+      total_price: finalTotal,
+      phone: orderData.customerPhone,
+      address: selectedStore.address,
+      note: orderData.note,
+      items: cartItems.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.price,
+          note: `${item.size} | ${item.sugar} | ${item.ice}`,
+      }))
+    };
 
-    try {
-      const response = await fetch('http://localhost:8080/api/orders/create', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentUser.token}`
-          },
-          body: JSON.stringify(orderPayload)
-      });
+    try {
+      const response = await fetch('http://localhost:8080/api/orders/create', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify(orderPayload)
+      });
 
-      if (response.ok) {
-        let savedOrder;
+      if (response.ok) {
+        let savedOrder;
         
-        // 👇 SỬA ĐOẠN NÀY ĐỂ TRÁNH LỖI JSON
-        try {
-            // Cố gắng đọc JSON từ Backend
-            const text = await response.text(); // Đọc dạng text trước
-            try {
-                savedOrder = JSON.parse(text); // Thử parse JSON
-            } catch {
-                // Nếu parse lỗi (do Backend trả về chữ "Đặt hàng thành công")
-                // -> Ta tự tạo object Order giả lập để hiển thị bill
-                console.log("Backend trả về text: ", text);
-                savedOrder = {
-                    id: `ORDER_${Date.now()}`, // Tự sinh mã đơn
-                    items: [...cartItems],     // Copy lại món đã đặt
-                    store: selectedStore,
-                    status: 'pending',
-                    totalPrice: finalTotal,
-                    customerName: orderData.customerName,
-                    customerPhone: orderData.customerPhone,
-                    paymentMethod: orderData.paymentMethod,
-                    orderTime: new Date()
-                };
-            }
-        } catch (e) {
-            console.error("Lỗi xử lý response:", e);
-        }
+        // Xử lý response từ Backend (tránh lỗi JSON)
+        try {
+            const text = await response.text();
+            try {
+                savedOrder = JSON.parse(text);
+            } catch {
+                console.log("Backend trả về text: ", text);
+                // Tạo order giả lập để hiển thị bill nếu backend không trả về JSON chuẩn
+                savedOrder = {
+                    id: `ORDER_${Date.now()}`,
+                    items: [...cartItems],
+                    store: selectedStore,
+                    status: 'pending',
+                    totalPrice: finalTotal,
+                    customerName: orderData.customerName,
+                    customerPhone: orderData.customerPhone,
+                    paymentMethod: orderData.paymentMethod,
+                    orderTime: new Date()
+                };
+            }
+        } catch (e) {
+            console.error("Lỗi xử lý response:", e);
+        }
 
-        // --- XỬ LÝ THÀNH CÔNG ---
-        setCartItems([]); // Xóa giỏ hàng
+        // --- QUAN TRỌNG: RESET GIỎ HÀNG TẠI ĐÂY ---
+        // 1. Xóa State để giao diện UI trống ngay lập tức
+        setCartItems([]); 
+
+        // 2. Gọi Service để xóa đúng key 'my_cart_items' trong LocalStorage
+        CartService.clearCart(); 
         
+        // (Bỏ 2 dòng localStorage.removeItem thủ công cũ đi vì nó sai tên key)
+
+        // 👆👆👆 HẾT PHẦN SỬA 👆👆👆
+
         if (savedOrder) {
             setOrders(prev => [savedOrder, ...prev]);
             setPendingOrder(savedOrder);
             setShowCheckout(false);
             setShowOrderConfirmation(true);
         }
-      } else {
-        alert("Đặt hàng thất bại, vui lòng thử lại!");
-      }
-    } catch (error) {
-      console.error("Lỗi đặt hàng:", error);
-      alert("Có lỗi kết nối đến server!");
-    }
-  };
+      } else {
+        alert("Đặt hàng thất bại, vui lòng thử lại!");
+      }
+    } catch (error) {
+      console.error("Lỗi đặt hàng:", error);
+      alert("Có lỗi kết nối đến server!");
+    }
+  };
 
   // --- 5. RENDER TRANG ---
   const renderPage = () => {
@@ -421,6 +431,7 @@ function App() {
           total={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
           onConfirmOrder={handleConfirmOrder}
           onBack={() => { setShowCheckout(false); setShowCart(true); }}
+          currentUser={currentUser}
         />
       )}
 

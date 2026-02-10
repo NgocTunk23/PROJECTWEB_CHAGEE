@@ -1,5 +1,5 @@
 services:
-  # 1. SQL Server (Database)
+  # 1. SQL Server
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sql_container
@@ -7,16 +7,16 @@ services:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=Password123!
     ports:
-      - "1434:1433" # Máy ngoài 1434 -> Docker 1433
+      - "1434:1433"
     networks:
       - chagee-net
 
-  # 2. Backend (Spring Boot)
+  # 2. Backend
   backend:
     build: ./backend
     container_name: backend_container
     ports:
-      - "8080:8080" # Máy ngoài 8081 -> Docker 8080
+      - "8080:8080"
     depends_on:
       - sqlserver
     networks:
@@ -26,22 +26,26 @@ services:
       - SPRING_DATASOURCE_USERNAME=sa
       - SPRING_DATASOURCE_PASSWORD=Password123!
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      #=validate =create  =update
 
-  # 3. Frontend (React) - ĐÃ SỬA CHUẨN
+  # 3. Frontend (Chế độ DEV)
   frontend:
     build: ./frontend
     container_name: frontend_container
     ports:
-      - "3001:3001"
+      - "3001:3001"  # Máy ngoài 3001 -> Docker 3001
     volumes:
-      - ./frontend:/app # Đồng bộ code từ máy vào Docker (Hot Reload)
-      - /app/node_modules # Giữ nguyên thư viện trong Docker (tránh xung đột)
+      - ./frontend:/app         # Map code từ máy vào Docker
+      - /app/node_modules       # Giữ node_modules của Docker, không cho máy đè lên
     environment:
-      - CHOKIDAR_USEPOLLING=true # Giúp máy Windows của Tôn kia nhận diện file thay đổi
-    command: npm run dev # BẮT BUỘC: Chạy lệnh dev của Vite
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true  # Thêm dòng này cho chắc ăn trên Windows
+    # Không cần dòng command: npm run dev nữa vì đã để trong Dockerfile rồi
+    # Nếu muốn ghi đè thì dùng dòng dưới:
+    # command: npm run dev -- --host --port 3001
     stdin_open: true
     tty: true
+    depends_on:
+      - backend
     networks:
       - chagee-net
 

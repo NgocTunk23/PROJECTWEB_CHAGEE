@@ -255,7 +255,7 @@
   }
 
   img, svg, video, canvas, audio, iframe, embed, object {
-    vertical-align: middle;
+
     display: block;
   }
 
@@ -645,6 +645,7 @@
     -webkit-box-orient: vertical;
     display: -webkit-box;
     overflow: hidden;
+    line-clamp: 2; /* ✅ THÊM DÒNG NÀY (số 2 phải khớp với ở trên) */
   }
 
   .block {

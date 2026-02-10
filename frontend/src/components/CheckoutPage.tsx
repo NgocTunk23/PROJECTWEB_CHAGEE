@@ -12,6 +12,7 @@ interface CheckoutPageProps {
   total: number;
   onConfirmOrder: (orderData: OrderData) => void;
   onBack: () => void;
+  currentUser: any;
 }
 
 export interface OrderData {
@@ -29,11 +30,19 @@ export function CheckoutPage({
   // discount,
   total,
   onConfirmOrder,
-  onBack
+  onBack,
+  // 👇 2. NHẬN PROP NÀY
+  currentUser
 }: CheckoutPageProps) {
+  // 👇 THÊM DÒNG NÀY ĐỂ DEBUG
+  console.log("Dữ liệu User nhận được:", currentUser);
   const [formData, setFormData] = useState<OrderData>({
-    customerName: '',
-    customerPhone: '',
+    // Ưu tiên lấy fullname, nếu không có thì lấy username, không có nữa thì để rỗng
+    customerName: currentUser?.fullname || currentUser?.username || '', 
+    
+    // Ưu tiên lấy phonenumber, nếu không có thì lấy phone
+    customerPhone: currentUser?.phonenumber || currentUser?.phone || '', 
+    
     paymentMethod: 'COD',
     note: ''
   });

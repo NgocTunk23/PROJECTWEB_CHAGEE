@@ -1,25 +1,21 @@
-# 1. Dùng Node.js để chạy
-FROM node:20-alpine
+# Sử dụng Node để chạy dev server
+FROM node:18-alpine
 
-# 2. Tạo thư mục làm việc
 WORKDIR /app
 
-# 3. Copy file quản lý thư viện vào trước (để tận dụng cache)
-# COPY package*.json ./ BẢN CŨ
+# Copy file dependency trước
 COPY package.json package-lock.json ./
 
-# 4. Cài đặt thư viện
+# Cài đặt thư viện
 RUN npm install
 
-# 5. Copy toàn bộ code Frontend vào
+# Copy toàn bộ code vào
 COPY . .
 
-# 6. Mở cổng 3000
+# Mở port (phải khớp với docker-compose)
 EXPOSE 3001
 
-# 7. Lệnh chạy React BẢN CŨ
-# CMD ["npm", "start"]s
-
-
-# 7. Lệnh chạy Vite
-CMD ["npm", "run", "dev"]
+# Lệnh chạy mặc định
+# Thêm --host để Docker mở kết nối ra ngoài
+# Thêm --port 3001 để ép chạy đúng port
+CMD ["npm", "run", "dev", "--", "--host", "--port", "3001"]
