@@ -82,10 +82,10 @@ public class Transaction {
     @Temporal(TemporalType.TIMESTAMP)
     private Date transactiontime;
 
-    @Column(name = "paymentgateway") // Khớp: paymentgateway NVARCHAR(255)
+    @Column(name = "paymentgateway", columnDefinition = "NVARCHAR(255)") // Khớp: paymentgateway NVARCHAR(255)
     private String paymentgateway;
 
-    @Column(name = "bankname") // Khớp: bankname NVARCHAR(255)
+    @Column(name = "bankname", columnDefinition = "NVARCHAR(255)") // Khớp: bankname NVARCHAR(255)
     private String bankname;
 
     public Transaction() {

@@ -27,10 +27,10 @@ public class Order {
     @Column(name = "taxprice") // Khớp: taxprice DECIMAL(18, 2)
     private BigDecimal taxprice = BigDecimal.ZERO;
 
-    @Column(name = "statusU") // Khớp: statusU NVARCHAR(255)
+    @Column(name = "statusU", columnDefinition = "NVARCHAR(255)") // Khớp: statusU NVARCHAR(255)
     private String statusU = "Pending";
 
-    @Column(name = "paymentmethod") // Khớp: paymentmethod NVARCHAR(255)
+    @Column(name = "paymentmethod", columnDefinition = "NVARCHAR(255)") // Khớp: paymentmethod NVARCHAR(255)
     private String paymentmethod;
 
     @Column(name = "ordertime") // Khớp: ordertime DATETIME
@@ -108,7 +108,7 @@ public class Order {
         @Column(name = "price") // Khớp: price DECIMAL
         private BigDecimal price;
 
-        @Column(name = "note") // Khớp: note NVARCHAR
+        @Column(name = "note", columnDefinition = "NVARCHAR(MAX)") // Khớp: note NVARCHAR
         private String note;
 
         public OrderDetail() {}

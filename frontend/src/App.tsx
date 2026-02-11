@@ -11,7 +11,7 @@ import { OrderConfirmation } from './components/OrderConfirmation';
 import { LoginPage, RegisterData } from './components/LoginPage';
 import { CartService } from './services/cartService';
 import { AuthService } from './services/authService';
-import { Home, Coffee, ClipboardList, User } from 'lucide-react';
+import { Home, Coffee, ClipboardList, User, ShoppingBag } from 'lucide-react';
 
 export type NavigationPage = 'home' | 'menu' | 'orders' | 'profile';
 
@@ -21,21 +21,28 @@ export interface Product {
   name: string;
   price: number;
   image: string;
-  description?: string;
+  description: string;
   category?: string;
-  
-  // 👇 THÊM 2 DÒNG NÀY:
-  nameVi?: string;
-  descriptionVi?: string;
+  descriptionU?: string;
 }
 
 export interface Store {
-  id: string;
-  name: string;
-  address: string;
-  distance: string;
-  prepTime: string;
-  image?: string;
+  // --- 1. Các trường cũ (Giữ lại để không lỗi giao diện) ---
+  id: string;        // Sẽ map từ branchid
+  name: string;      // Sẽ map từ branchName
+  address: string;   // Sẽ map từ addressU
+  distance: string;  // Chuỗi hiển thị (VD: "2.5km")
+  prepTime: string;  // Thời gian chuẩn bị (Hardcode hoặc tính)
+  image?: string;    // Ảnh cửa hàng
+
+  // --- 2. Các trường MỚI (Cần cho logic tính toán) ---
+  latitude?: number;       // Tọa độ Vĩ độ
+  longitude?: number;      // Tọa độ Kinh độ
+  openTime?: string;       // Giờ mở cửa
+  closeTime?: string;      // Giờ đóng cửa
+  isOpen?: boolean;     // <--- ĐÂY LÀ DÒNG QUAN TRỌNG ĐỂ HẾT LỖI "isOpen"
+  // Biến phụ để sắp xếp (ẩn)
+  _sortDistance?: number;  // Khoảng cách dạng số (km)
 }
 
 export interface CartItem {
@@ -449,6 +456,18 @@ function App() {
           onPayNow={() => alert('Chức năng đang phát triển')}
           onBackToHome={() => { setShowOrderConfirmation(false); setCurrentPage('home'); }}
         />
+      )}
+      {cartItems.length > 0 && !showCart && !showCheckout && (
+        <button 
+          onClick={() => setShowCart(true)} 
+          // Tăng bottom-20 để tránh bị thanh Mobile Nav che khuất
+          className="fixed bottom-20 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-[9999] hover:scale-110 active:scale-95 transition-transform md:bottom-10"
+        >
+          <ShoppingBag size={24} />
+          <span className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 border-2 border-white rounded-full text-[10px] flex items-center justify-center font-bold">
+            {cartItems.reduce((sum, item) => sum + item.quantity, 0)} 
+          </span>
+        </button>
       )}
     </div>
   );

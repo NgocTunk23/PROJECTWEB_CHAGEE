@@ -24,7 +24,7 @@ public class Buyer {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdat;
 
-    @Column(name = "fullname") // Khớp: fullname NVARCHAR(100)
+    @Column(name = "fullname", columnDefinition = "NVARCHAR(100)") // Khớp: fullname NVARCHAR(100)
     private String fullname;
 
     @Column(name = "dob") // Khớp: dob DATE
@@ -34,7 +34,7 @@ public class Buyer {
     @Column(name = "avatarlink", columnDefinition = "VARCHAR(MAX)") // Khớp: avatarlink VARCHAR(MAX)
     private String avatarlink;
 
-    @Column(name = "gender", length = 10) // Khớp: gender NVARCHAR(10)
+    @Column(name = "gender", columnDefinition = "NVARCHAR(10)") // Khớp: gender NVARCHAR(10)
     private String gender;
 
     @Column(name = "permissionlevel") // Khớp: permissionlevel INT
@@ -46,7 +46,7 @@ public class Buyer {
     @Column(name = "loyaltycode") // Khớp: loyaltycode VARCHAR(255)
     private String loyaltycode;
 
-    @Column(name = "membershiptier") // Khớp: membershiptier NVARCHAR(255)
+    @Column(name = "membershiptier", columnDefinition = "NVARCHAR(255)") // Khớp: membershiptier NVARCHAR(255)
     private String membershiptier;
 
     public Buyer() {

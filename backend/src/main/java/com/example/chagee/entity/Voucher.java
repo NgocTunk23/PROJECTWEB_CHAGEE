@@ -11,7 +11,7 @@ public class Voucher {
     @Column(name = "vouchercode", length = 255) // Khớp: vouchercode VARCHAR(255)
     private String vouchercode;
 
-    @Column(name = "vouchername", length = 100) // Khớp: vouchername NVARCHAR(100)
+    @Column(name = "vouchername", columnDefinition = "NVARCHAR(100)") // Khớp: vouchername NVARCHAR(100)
     private String vouchername;
 
     @Column(name = "discountamount") // Khớp: discountamount DECIMAL(18, 2)

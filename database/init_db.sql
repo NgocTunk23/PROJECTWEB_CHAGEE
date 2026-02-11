@@ -1,14 +1,16 @@
 USE master;
 GO
 
--- 1. Xóa Database nếu tồn tại (Kèm ngắt kết nối)
-IF EXISTS (SELECT * FROM sys.databases WHERE name = 'chagee_db')
+-- Kiểm tra và xóa database nếu đã tồn tại để tránh lỗi "file already exists"
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'chagee_db')
 BEGIN
+    -- Ngắt toàn bộ kết nối đang có để có quyền xóa
     ALTER DATABASE chagee_db SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE chagee_db;
 END
 GO
 
+-- Tạo mới database
 CREATE DATABASE chagee_db;
 GO
 
@@ -136,8 +138,13 @@ GO
 IF OBJECT_ID('Branches', 'U') IS NOT NULL DROP TABLE Branches;
 CREATE TABLE Branches (
     branchid VARCHAR(255) PRIMARY KEY,
-    addressU NVARCHAR(255) NOT NULL,
-    managerusername VARCHAR(255), -- Người quản lý là Admin
+    branch_name NVARCHAR(255),            -- Tên hiển thị đẹp (VD: CHAGEE Bàu Cát)
+    addressU NVARCHAR(255) NOT NULL,      -- Địa chỉ (Cũ)
+    latitude FLOAT,                       -- Vĩ độ (Google Maps)
+    longitude FLOAT,                      -- Kinh độ (Google Maps)
+    open_time VARCHAR(5) DEFAULT '09:00', -- Giờ mở cửa (VD: 09:00)
+    close_time VARCHAR(5) DEFAULT '22:00',-- Giờ đóng cửa (VD: 22:00)
+    managerusername VARCHAR(255),         -- Người quản lý
     FOREIGN KEY (managerusername) REFERENCES Admins(username)
 );
 GO
@@ -181,7 +188,7 @@ CREATE TABLE Orders (
     
     paymentmethod NVARCHAR(255),
     originalprice DECIMAL(18, 2),
-    taxprice DECIMAL(18, 2) DEFAULT 0,
+    taxprice NUMERIC(38,2),
 
     
     statusU NVARCHAR(255) DEFAULT N'Pending',
@@ -233,7 +240,7 @@ IF OBJECT_ID('VoucherAppliedItems', 'U') IS NOT NULL DROP TABLE VoucherAppliedIt
 
 CREATE TABLE VoucherAppliedItems (
     vouchercode VARCHAR(255),
-    applicableobject NVARCHAR(100), -- Tên món hoặc danh mục được áp dụng (VD: 'Trà sữa', 'Size L')
+    applicableobject NVARCHAR(255), -- Tên món hoặc danh mục được áp dụng (VD: 'Trà sữa', 'Size L')
     
     PRIMARY KEY (vouchercode, applicableobject), -- Khóa chính phức hợp để tránh trùng lặp
     FOREIGN KEY (vouchercode) REFERENCES Vouchers(vouchercode) ON DELETE CASCADE
@@ -299,29 +306,48 @@ GO
 -- =============================================
 -- Removed 'branchname' from the column list to match the VALUES and Table Definition
 INSERT INTO Branches (
-    branchid, addressU, managerusername
+    branchid, branch_name, addressU, latitude, longitude, open_time, close_time, managerusername
 ) VALUES
-('CHAGEE_LBB',  N'462 Lũy Bán Bích, Phường Tân Phú, TP. HCM',                                   'manager01'),
-('CHAGEE_TSN',  N'369A Tân Sơn Nhì, Phường Phú Thọ Hoà, TP. HCM',                               'manager01'),
-('CHAGEE_NTB',  N'162 Nguyễn Thái Bình, Phường Nguyễn Thái Bình, TP. HCM',                      'manager01'),
-('CHAGEE_MPL',  N'GF02, Tầng Trệt mPlaza, 39 Lê Duẩn, Phường Sài Gòn, TP. HCM',                 'manager01'),
-('CHAGEE_VGP',  N'101.S05 Vinhomes Grand Park, 88 Phước Thiên, Long Bình, TP. HCM',             'manager01'),
-('CHAGEE_BC',   N'133-135 Bàu Cát, Phường Tân Bình, TP. HCM',                                   'manager01'),
-('CHAGEE_PQ',   N'119G-119H Phổ Quang, Phường Đức Nhuận, TP. HCM',                              'manager01'),
-('CHAGEE_HG',   N'584-586-588 Hậu Giang, Phường Phú Lâm, TP. HCM',                              'manager01'),
-('CHAGEE_NGT',  N'116 Nguyễn Gia Trí, Phường Bình Thạnh, TP. HCM',                              'manager01'),
-('CHAGEE_VHM',  N'Tầng 1, Vị trí 1-20 Vạn Hạnh Mall, 11 Sư Vạn Hạnh, Phường Hòa Hưng, TP. HCM', 'manager01'),
-('CHAGEE_VCP',  N'Vinhomes Central Park C1.SH06, Điện Biên Phủ, Bình Thạnh, TP. HCM',           'manager01'),
-('CHAGEE_CAT',  N'Catavil An Phú, 01 Đường Song Hành, Phường Bình Trưng, TP. HCM',              'manager01'),
-('CHAGEE_NT',   N'440 Nguyễn Trãi, Phường An Đông, TP. Hồ Chí Minh',                            'manager01'),
-('CHAGEE_LTT',  N'200A Lý Tự Trọng, Phường Bến Thành, TP. HCM',                                 'manager01'),
-('CHAGEE_LVS',  N'236A Lê Văn Sỹ, Phường Tân Sơn Hoà, TP. HCM',                                 'manager01'),
-('CHAGEE_LHP',  N'178-180 Lê Hồng Phong, Phường Chợ Quán, TP. HCM',                             'manager01'),
-('CHAGEE_PXL',  N'181 Phan Xích Long, Phường Cầu Kiệu, TP. HCM',                                'manager01'),
-('CHAGEE_CMT8', N'66B Cách Mạng Tháng 8, P.Xuân Hoà, TP.HCM',                                   'manager01'),
-('CHAGEE_DK',   N'131 Đồng Khởi, Phường Bến Nghé, TP. HCM',                                     'manager01'),
-('CHAGEE_NTMK', N'185 Nguyễn Thị Minh Khai, Phường Bến Thành, TP. HCM',                         'manager01'),
-('CHAGEE_NDC',  N'59 Nguyễn Đức Cảnh, Phường Tân Hưng, TP. HCM',                                'manager01');
+-- 1. Tân Phú
+('CHAGEE_LBB', N'CHAGEE Lũy Bán Bích', N'462 Lũy Bán Bích, Phường Tân Phú, TP. HCM', 10.785432, 106.632145, '09:00', '22:30', 'manager01'),
+('CHAGEE_TSN', N'CHAGEE Tân Sơn Nhì',  N'369A Tân Sơn Nhì, Phường Phú Thọ Hoà, TP. HCM', 10.801234, 106.623456, '09:00', '22:30', 'manager01'),
+
+-- 2. Quận 1
+('CHAGEE_NTB', N'CHAGEE Nguyễn Thái Bình', N'162 Nguyễn Thái Bình, P.Nguyễn Thái Bình, Q.1, TP. HCM', 10.769500, 106.698200, '08:00', '22:00', 'manager01'),
+('CHAGEE_MPL', N'CHAGEE mPlaza',          N'GF02, Tầng Trệt mPlaza, 39 Lê Duẩn, Q.1, TP. HCM', 10.782100, 106.701500, '09:00', '22:00', 'manager01'),
+('CHAGEE_DK',  N'CHAGEE Đồng Khởi',       N'131 Đồng Khởi, Phường Bến Nghé, Q.1, TP. HCM', 10.776500, 106.702800, '09:00', '22:30', 'manager01'),
+('CHAGEE_LTT', N'CHAGEE Lý Tự Trọng',     N'200A Lý Tự Trọng, Phường Bến Thành, Q.1, TP. HCM', 10.772300, 106.698100, '08:30', '23:00', 'manager01'),
+('CHAGEE_NTMK',N'CHAGEE N.T.Minh Khai',   N'185 Nguyễn Thị Minh Khai, P.Bến Thành, Q.1, TP. HCM', 10.785400, 106.695200, '08:00', '22:00', 'manager01'),
+
+-- 3. TP. Thủ Đức (Quận 2, 9 cũ)
+('CHAGEE_VGP', N'CHAGEE Grand Park',      N'101.S05 Vinhomes Grand Park, Q.9, TP. HCM', 10.840200, 106.835600, '09:00', '22:00', 'manager01'),
+('CHAGEE_CAT', N'CHAGEE Cantavil',        N'Cantavil An Phú, 01 Đường Song Hành, Q.2, TP. HCM', 10.801692, 106.741639, '09:00', '22:00', 'manager01'),
+
+-- 4. Tân Bình
+('CHAGEE_BC',  N'CHAGEE Bàu Cát',         N'133-135 Bàu Cát, Phường Tân Bình, TP. HCM', 10.796366, 106.647960, '08:00', '22:30', 'manager01'),
+('CHAGEE_PQ',  N'CHAGEE Phổ Quang',       N'119G-119H Phổ Quang, Phường Đức Nhuận, TP. HCM', 10.805200, 106.670500, '09:00', '22:00', 'manager01'),
+('CHAGEE_LVS', N'CHAGEE Lê Văn Sỹ',       N'236A Lê Văn Sỹ, Phường Tân Sơn Hoà, TP. HCM', 10.788500, 106.668200, '09:00', '23:00', 'manager01'),
+('CHAGEE_CMT8',N'CHAGEE CMT8',            N'66B Cách Mạng Tháng 8, P.Xuân Hoà, TP.HCM', 10.790100, 106.655400, '08:00', '22:00', 'manager01'),
+
+-- 5. Quận 6
+('CHAGEE_HG',  N'CHAGEE Hậu Giang',       N'584-586-588 Hậu Giang, Phường Phú Lâm, TP. HCM', 10.748900, 106.635200, '09:00', '22:00', 'manager01'),
+
+-- 6. Bình Thạnh
+('CHAGEE_NGT', N'CHAGEE Nguyễn Gia Trí',  N'116 Nguyễn Gia Trí, Phường Bình Thạnh, TP. HCM', 10.803400, 106.715600, '08:00', '23:00', 'manager01'),
+('CHAGEE_VCP', N'CHAGEE Central Park',    N'Vinhomes Central Park C1.SH06, Bình Thạnh, TP. HCM', 10.795200, 106.722100, '08:00', '22:00', 'manager01'),
+
+-- 7. Quận 10
+('CHAGEE_VHM', N'CHAGEE Vạn Hạnh Mall',   N'Tầng 1, Vạn Hạnh Mall, 11 Sư Vạn Hạnh, Q.10, TP. HCM', 10.770500, 106.670300, '09:30', '22:00', 'manager01'),
+
+-- 8. Quận 5
+('CHAGEE_NT',  N'CHAGEE Nguyễn Trãi',     N'440 Nguyễn Trãi, Phường An Đông, Q.5, TP. HCM', 10.755600, 106.675400, '09:00', '23:00', 'manager01'),
+('CHAGEE_LHP', N'CHAGEE Lê Hồng Phong',   N'178-180 Lê Hồng Phong, Phường Chợ Quán, Q.5, TP. HCM', 10.762300, 106.672500, '09:00', '22:00', 'manager01'),
+
+-- 9. Phú Nhuận
+('CHAGEE_PXL', N'CHAGEE Phan Xích Long',  N'181 Phan Xích Long, Phường Cầu Kiệu, TP. HCM', 10.794200, 106.690100, '08:00', '23:00', 'manager01'),
+
+-- 10. Quận 7
+('CHAGEE_NDC', N'CHAGEE Nguyễn Đức Cảnh', N'59 Nguyễn Đức Cảnh, Phường Tân Hưng, Q.7, TP. HCM', 10.725600, 106.708900, '09:00', '22:00', 'manager01');
 GO
 
 -- =============================================

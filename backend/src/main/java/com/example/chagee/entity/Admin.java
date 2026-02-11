@@ -21,7 +21,7 @@ public class Admin {
     @Column(name = "createdat")
     private Date createdat;
 
-    @Column(name = "fullname")
+    @Column(name = "fullname", columnDefinition = "NVARCHAR(100)")
     private String fullname;
 
     @Column(name = "dob")
@@ -31,7 +31,7 @@ public class Admin {
     @Column(name = "avatarlink", columnDefinition = "VARCHAR(MAX)") // Hoặc để String bình thường cũng được
     private String avatarlink;
 
-    @Column(name = "gender", length = 10)
+    @Column(name = "gender", columnDefinition = "NVARCHAR(10)")
     private String gender;
 
     @Column(name = "permissionlevel", columnDefinition = "int default 1")

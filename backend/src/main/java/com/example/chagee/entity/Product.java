@@ -11,7 +11,7 @@ public class Product {
     @Column(name = "productid", length = 255) // Khớp: productid VARCHAR(255)
     private String productid;
 
-    @Column(name = "productname", nullable = false) // Khớp: productname NVARCHAR(100)
+    @Column(name = "productname", columnDefinition = "NVARCHAR(100)") // Khớp: productname NVARCHAR(100)
     private String productname;
 
     @Column(name = "productimage") // Khớp: productimage VARCHAR(MAX)
@@ -20,11 +20,11 @@ public class Product {
     @Column(name = "displayprice", nullable = false) // Khớp: displayprice DECIMAL(18, 2)
     private BigDecimal displayprice;
 
-    @Column(name = "category") // Khớp: category NVARCHAR(255)
+    @Column(name = "category", columnDefinition = "NVARCHAR(255)") // Khớp: category NVARCHAR(255)
     private String category;
 
-    @Column(name = "descriptionU") // Khớp: descriptionU NVARCHAR(MAX)
-    private String description;
+    @Column(name = "descriptionU", columnDefinition = "NVARCHAR(MAX)") // Khớp: descriptionU NVARCHAR(MAX)
+    private String descriptionU;
 
     @Column(name = "soldquantity") // Khớp: soldquantity INT
     private Integer soldquantity;
@@ -56,8 +56,8 @@ public class Product {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
-    public String getDescriptionU() { return description; }
-    public void setDescriptionU(String description) { this.description = description; }
+    public String getDescriptionU() { return descriptionU; }
+    public void setDescriptionU(String description) { this.descriptionU = description; }
 
     public Integer getSoldquantity() { return soldquantity; }
     public void setSoldquantity(Integer soldquantity) { this.soldquantity = soldquantity; }

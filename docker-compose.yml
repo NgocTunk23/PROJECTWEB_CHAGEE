@@ -10,6 +10,13 @@ services:
       - "1434:1433"
     networks:
       - chagee-net
+    # 👇 BẮT BUỘC PHẢI CÓ PHẦN NÀY
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Password123!", "-C", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   # 2. Backend
   backend:
@@ -17,8 +24,10 @@ services:
     container_name: backend_container
     ports:
       - "8080:8080"
+    # 👇 SỬA CÚ PHÁP TẠI ĐÂY (Bỏ dấu gạch ngang trước sqlserver)
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     networks:
       - chagee-net
     environment:
@@ -32,16 +41,13 @@ services:
     build: ./frontend
     container_name: frontend_container
     ports:
-      - "3001:3001"  # Máy ngoài 3001 -> Docker 3001
+      - "3001:3001"
     volumes:
-      - ./frontend:/app         # Map code từ máy vào Docker
-      - /app/node_modules       # Giữ node_modules của Docker, không cho máy đè lên
+      - ./frontend:/app
+      - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true  # Thêm dòng này cho chắc ăn trên Windows
-    # Không cần dòng command: npm run dev nữa vì đã để trong Dockerfile rồi
-    # Nếu muốn ghi đè thì dùng dòng dưới:
-    # command: npm run dev -- --host --port 3001
+      - WATCHPACK_POLLING=true
     stdin_open: true
     tty: true
     depends_on:

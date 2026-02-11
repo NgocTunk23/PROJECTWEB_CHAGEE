@@ -9,6 +9,7 @@ export interface ProductAPI {
     productimage: string;   // Sửa productImage -> productimage
     category: string;
     soldquantity?: number;  // Sửa soldQuantity -> soldquantity
+    descriptionU?: string;   // Sửa description -> descriptionU (như bạn đã thấy ở bước trước)
 }
 
 export const ProductService = {

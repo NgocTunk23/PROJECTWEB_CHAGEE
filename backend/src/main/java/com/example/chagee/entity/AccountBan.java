@@ -70,7 +70,7 @@ public class AccountBan {
     @Temporal(TemporalType.TIMESTAMP)
     private Date bantime;
 
-    @Column(name = "reason") // Khớp: reason NVARCHAR(255)
+    @Column(name = "reason", columnDefinition = "NVARCHAR(255)") // Khớp: reason NVARCHAR(255)
     private String reason;
 
     // ========================================================================

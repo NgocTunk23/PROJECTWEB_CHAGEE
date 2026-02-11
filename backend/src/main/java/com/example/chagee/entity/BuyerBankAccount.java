@@ -15,7 +15,7 @@ public class BuyerBankAccount {
     public static class Id implements Serializable {
         @Column(name = "buyerusername")
         private String buyerusername;
-        @Column(name = "bankname") // Map rõ tên cột vì tên biến kiểu lạc đà
+        @Column(name = "bankname", columnDefinition = "NVARCHAR(255)") // Map rõ tên cột vì tên biến kiểu lạc đà
         private String bankname;
         @Column(name = "accountnumber")
         private String accountnumber;
@@ -67,7 +67,7 @@ public class BuyerBankAccount {
     @JoinColumn(name = "buyerusername")
     private Buyer buyer;
 
-    @Column(name = "cardtype")
+    @Column(name = "cardtype", columnDefinition = "NVARCHAR(255)")
     private String cardtype;
 
     // ========================================================================
