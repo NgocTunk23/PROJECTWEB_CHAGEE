@@ -9,13 +9,15 @@ public class JwtResponse {
     private String email;
     private int rewardPoints; // <--- Thêm trường này
     private List<String> roles;
+    private String fullname; // <--- Thêm trường này
 
-    public JwtResponse(String accessToken, String username, String email, int rewardPoints, List<String> roles) {
+    public JwtResponse(String accessToken, String username, String email, int rewardPoints, List<String> roles , String fullname) {
         this.token = accessToken;
         this.username = username;
         this.email = email;
         this.rewardPoints = rewardPoints;
         this.roles = roles;
+        this.fullname = fullname; // <--- Gán giá trị fullname nếu cần thiết
     }
 
     // Getters and Setters
@@ -30,4 +32,7 @@ public class JwtResponse {
     public int getRewardPoints() { return rewardPoints; } // <--- Getter quan trọng
     public void setRewardPoints(int rewardPoints) { this.rewardPoints = rewardPoints; }
     public List<String> getRoles() { return roles; }
+    public void setRoles(List<String> roles) { this.roles = roles; }
+    public String getFullname() { return fullname; } // <--- Getter cho fullname
+    public void setFullname(String fullname) { this.fullname = fullname; } // <
 }

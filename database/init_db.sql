@@ -174,6 +174,7 @@ CREATE TABLE Vouchers (
     discountpercentage INT,
     maxdiscount DECIMAL(18, 2),
     minordervalue DECIMAL(18, 2),
+    expirydate DATE, -- ✅ THÊM DÒNG NÀY: Hạn sử dụng
     createdby VARCHAR(255), -- Người tạo là Admin
     FOREIGN KEY (createdby) REFERENCES Admins(username)
 );
@@ -297,7 +298,7 @@ GO
 INSERT INTO Buyers (
     username, passwordU, email, phonenumber, fullname, rewardpoints, membershiptier, avatarlink
 ) VALUES
-('member01', '123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 120, N'Silver', 'images/user_avts/avt_member01.jpeg'),
+('member01', '123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 600, N'Silver', 'images/user_avts/avt_member01.jpeg'),
 ('member02', '123456789', 'member02@gmail.com', '0911000002', N'Trần Nhi', 300, N'Gold', 'images/user_avts/avt_member02.jpeg');
 GO
 
@@ -378,22 +379,34 @@ GO
 -- 5. VOUCHER
 -- =============================================
 INSERT INTO Vouchers (
-    vouchercode, vouchername, discountpercentage,
-    maxdiscount, minordervalue, createdby
+    vouchercode, 
+    vouchername, 
+    discountamount, 
+    discountpercentage, 
+    maxdiscount, 
+    minordervalue, 
+    expirydate, 
+    createdby
 ) VALUES
-('SALE10',      N'Giảm 10%',     10,    30000, 100000,  'manager01'),
-('BUY2GET1',    N'Mua 2 tặng 1', NULL,  20000, 50000,   'manager01');
+-- 1. Voucher giảm 10% (Tối đa 50k cho đơn từ 100k)
+('DISCOUNT10', N'Ưu đãi Oolong - Giảm 10%', NULL, 10, 50000, 100000, '2026-06-30', 'manager01'),
+
+-- 2. Voucher giảm thẳng 30.000đ (Cho đơn từ 150k)
+('CASH30K', N'Tiệc Trà Chiều - Giảm 30k', 30000, NULL, 30000, 150000, '2026-05-15', 'manager01'),
+
+-- 3. Voucher Mua 2 Tặng 1 (Logic tính toán thường để mức giảm 0 hoặc xử lý ở App)
+('B2G1FREE', N'Mua 2 Tặng 1 - Member Mới', NULL, NULL, NULL, 80000, '2026-04-01', 'manager01');
 GO
 
--- =============================================
--- 6. VOUCHER APPLIED
--- =============================================
-INSERT INTO VoucherAppliedItems (
-    vouchercode, applicableobject
-) VALUES
-('SALE10',   N'Trà sữa'),
-('SALE10',   N'Trà');
-GO
+-- -- =============================================
+-- -- 6. VOUCHER APPLIED
+-- -- =============================================
+-- INSERT INTO VoucherAppliedItems (
+--     vouchercode, applicableobject
+-- ) VALUES
+-- ('SALE10',   N'Trà sữa'),
+-- ('SALE10',   N'Trà');
+-- GO
 
 -- -- =============================================
 -- -- 7. ĐƠN HÀNG

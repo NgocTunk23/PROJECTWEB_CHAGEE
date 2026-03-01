@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Store } from '../App';
-import { ChevronLeft, Search, MapPin, Clock } from 'lucide-react';
+import { ChevronLeft, MapPin } from 'lucide-react';
 import { StoreService } from '../services/storeService';
 import { calculateDistance, formatDistance } from '../utils/distance';
 
@@ -8,9 +8,11 @@ interface StoreSelectorProps {
   selectedStore: Store | null;
   onSelectStore: (store: Store) => void;
   onClose: () => void;
+  // ✅ NHẬN USER LOCATION TỪ APP.TSX
+  userLocation: {lat: number, lng: number} | null;
 }
 
-export function StoreSelector({ selectedStore, onSelectStore, onClose }: StoreSelectorProps) {
+export function StoreSelector({ selectedStore, onSelectStore, onClose, userLocation }: StoreSelectorProps) {
   const [stores, setStores] = useState<Store[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,54 +31,35 @@ export function StoreSelector({ selectedStore, onSelectStore, onClose }: StoreSe
       setIsLoading(true);
       
       try {
-        // 1. Lấy vị trí User với độ chính xác cao và thời gian chờ (timeout)
-        const userPos = await new Promise<{lat: number, lng: number} | null>((res) => {
-          if (!navigator.geolocation) {
-            res(null);
-            return;
-          }
-          navigator.geolocation.getCurrentPosition(
-            (p) => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
-            () => res(null),
-            { 
-              enableHighAccuracy: true, // Ưu tiên độ chính xác cao nhất (GPS thay vì IP)
-              timeout: 5000,            // Chờ tối đa 5 giây để lấy tọa độ
-              maximumAge: 0             // Không dùng vị trí cũ lưu trong bộ nhớ
-            }
-          );
-        });
-
-        // 2. Lấy dữ liệu từ API
+        // 1. Lấy dữ liệu từ API
         const data = await StoreService.getAllStores();
         
-        // 3. Xử lý dữ liệu và tính toán khoảng cách thực tế
+        // 2. Xử lý dữ liệu và tính toán ngay lập tức nhờ userLocation đã có
         const processed: Store[] = data.map((b: any) => {
-          // ✅ KIỂM TRA TRƯỜNG DỮ LIỆU: Đảm bảo b.latitude và b.longitude có tồn tại
-          // (Phòng trường hợp SQL trả về b.Latitude hoặc b.latitude viết thường)
           const storeLat = b.latitude || b.Latitude;
           const storeLng = b.longitude || b.Longitude;
           
-          const hasCoords = userPos && storeLat && storeLng;
+          // Dùng userLocation từ Props, không cần await GPS nữa
+          const hasCoords = userLocation && storeLat && storeLng;
           
-          // Nếu có đủ tọa độ mới tính, ngược lại để null
           const dist = hasCoords 
-            ? calculateDistance(userPos.lat, userPos.lng, storeLat, storeLng) 
+            ? calculateDistance(userLocation.lat, userLocation.lng, storeLat, storeLng) 
             : null;
 
           return {
-            id: b.branchid,
+            id: b.branchid.toString(),
             name: b.branchName || `CHAGEE ${b.branchid}`,
             address: b.addressU,
-            // ✅ HIỂN THỊ THÔNG MINH: Nếu chưa tính được thì hiện "Đang định vị..."
             distance: dist !== null ? formatDistance(dist) : "Đang xác định...",
-            _distVal: dist ?? 999999, // Dùng để sắp xếp: không có khoảng cách thì đẩy xuống cuối
+            // ✅ ĐỒNG BỘ TÊN BIẾN VỚI INTERFACE STORE (_sortDistance)
+            _sortDistance: dist ?? 999999,
             isOpen: checkIsOpen(b.openTime, b.closeTime),
             prepTime: '15 Phút'
           };
         });
 
-        // 4. Sắp xếp danh sách: Cửa hàng gần bạn nhất lên đầu
-        const sortedStores = [...processed].sort((a, b) => (a._sortDistance as number) - (b._sortDistance as number));
+        // 3. Sắp xếp danh sách
+        const sortedStores = [...processed].sort((a, b) => (a._sortDistance || 0) - (b._sortDistance || 0));
         
         setStores(sortedStores);
       } catch (error) {
@@ -86,14 +69,14 @@ export function StoreSelector({ selectedStore, onSelectStore, onClose }: StoreSe
       }
     };
     initData();
-  }, []);
+  }, [userLocation]); // ✅ Chạy lại nếu vị trí user cập nhật (lúc mới vào App chưa có, sau 1s có thì cập nhật lại list)
 
   const filtered = stores.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.address.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <header className="p-4 border-b flex items-center gap-3">
-        <button onClick={onClose}><ChevronLeft size={24} /></button>
+        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft size={24} /></button>
         <input 
           className="flex-1 bg-gray-100 p-2 rounded-lg" 
           placeholder="Tìm kiếm..." 
@@ -103,7 +86,7 @@ export function StoreSelector({ selectedStore, onSelectStore, onClose }: StoreSe
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {isLoading ? (
-          <p className="text-center text-gray-400">Đang định vị...</p>
+          <p className="text-center text-gray-400">Đang tải danh sách...</p>
         ) : filtered.map(store => (
           <div key={store.id} className="border p-4 rounded-xl shadow-sm">
             <div className="flex justify-between items-start">

@@ -2,6 +2,10 @@ package com.example.chagee.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "Vouchers") // Khớp: Vouchers
@@ -26,8 +30,14 @@ public class Voucher {
     @Column(name = "minordervalue") // Khớp: minordervalue DECIMAL(18, 2)
     private BigDecimal minordervalue;
 
+    @Column(name = "expirydate")
+    @JsonFormat(pattern = "yyyy-MM-dd") // Để trả về JSON dạng 2026-03-30
+    private LocalDate expirydate;
+
+    // Trong file Voucher.java
     @ManyToOne
-    @JoinColumn(name = "createdby") // Khớp: createdby VARCHAR(255) trỏ tới Admins
+    @JoinColumn(name = "createdby")
+    @JsonIgnore // ✅ Thêm dòng này để chặn vòng lặp JSON
     private Admin createdby;
 
     public Voucher() {}
@@ -52,6 +62,9 @@ public class Voucher {
 
     public BigDecimal getMinordervalue() { return minordervalue; }
     public void setMinordervalue(BigDecimal minordervalue) { this.minordervalue = minordervalue; }
+
+    public LocalDate getExpirydate() { return expirydate; }
+    public void setExpirydate(LocalDate expirydate) { this.expirydate = expirydate; }
 
     public Admin getCreatedby() { return createdby; }
     public void setCreatedby(Admin createdby) { this.createdby = createdby; }

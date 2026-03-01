@@ -78,6 +78,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/products/**").permitAll()  // Cho phép xem sản phẩm
                 .requestMatchers("/api/stores/**").permitAll()    // Cho phép xem cửa hàng
                 .requestMatchers("/error").permitAll()            // Cho phép xem trang lỗi (tránh lỗi 403 oan)
+                .requestMatchers("/api/vouchers/**").permitAll()
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN") // Chỉ Admin mới vào được
                 .requestMatchers("/api/branches/**").permitAll()
                 .anyRequest().authenticated()                     // Các link còn lại phải đăng nhập

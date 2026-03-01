@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react'; // ✅ Thêm useState, useEffect
 import { Order } from '../App';
 import { Settings, Bell, ChevronRight, QrCode, Gift, Users, HelpCircle, LogOut, User } from 'lucide-react';
-
+import { VoucherService } from '../services/voucherService'; // ✅ Thêm Import này
 interface ProfilePageProps {
   userPoints: { teaLeaves: number; vouchers: number };
   orders: Order[];
@@ -9,8 +10,61 @@ interface ProfilePageProps {
 }
 
 export function ProfilePage({ userPoints, orders, onOpenLogin, currentUser }: ProfilePageProps) {
+  const [vouchers, setVouchers] = useState<any[]>([]); // ✅ State lưu danh sách voucher
   const recentOrders = orders.slice(0, 3);
 
+  const ranks = [
+    { name: 'BRONZE', threshold: 100, color: 'bronze-metallic', textColor: 'text-amber-50', icon: '🥉' },
+    { name: 'SILVER', threshold: 300, color: 'silver-metallic', textColor: 'text-gray-900', icon: '🥈' },
+    { name: 'GOLD', threshold: 600, color: 'gold-metallic', textColor: 'text-yellow-950', icon: '🥇' },
+    { name: 'DIAMOND', threshold: 1000, color: 'diamond-metallic', textColor: 'text-white', icon: '💎' }
+  ];
+  // --- LOGIC XỬ LÝ HẠNG THÀNH VIÊN (SANG TRỌNG) ---
+  const getMemberTier = (points: number = 0) => {
+    // Tìm hạng tiếp theo dựa trên số điểm hiện tại
+    const nextRankIndex = ranks.findIndex(r => points < r.threshold);
+    
+    let currentRank, nextRank;
+
+    if (nextRankIndex === -1) {
+      // Đã đạt hạng Kim Cương (hạng cuối)
+      currentRank = ranks[ranks.length - 1];
+      nextRank = null;
+    } else {
+      // Đang ở các hạng từ Đồng đến Lục Bảo
+      currentRank = nextRankIndex > 0 ? ranks[nextRankIndex - 1] : ranks[0];
+      nextRank = ranks[nextRankIndex];
+    }
+
+    // Tính toán số CUP và tiến độ an toàn
+    const cupsNeeded = nextRank ? Math.ceil((nextRank.threshold - points) / 10) : 0;
+    const prevThreshold = nextRankIndex > 0 ? ranks[nextRankIndex - 1].threshold : 0;
+    const range = nextRank ? (nextRank.threshold - prevThreshold) : 1;
+    const progress = nextRank ? ((points - prevThreshold) / range) * 100 : 100;
+
+    return { 
+      ...currentRank, 
+      nextRankName: nextRank?.name || null, 
+      cupsNeeded, 
+      progress: Math.min(Math.max(progress, 0), 100) 
+    };
+  };
+
+  const currentTier = getMemberTier(currentUser?.rewardpoints || 0);
+
+  // ✅ Thêm useEffect để lấy số lượng voucher khi trang web load
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      if (!currentUser?.token) return;
+      try {
+        const data = await VoucherService.getVouchers(undefined, currentUser.token);
+        setVouchers(data);
+      } catch (error) {
+        console.error("Lỗi lấy voucher tại Profile:", error);
+      }
+    };
+    fetchVouchers();
+  }, [currentUser]);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -47,9 +101,9 @@ export function ProfilePage({ userPoints, orders, onOpenLogin, currentUser }: Pr
             <div className="flex-1">
               {currentUser ? (
                 <>
-                  <h2 className="text-xl font-bold mb-1">{currentUser.full_name || currentUser.username}</h2>
+                  <h2 className="text-xl font-bold mb-1">{currentUser.fullname || currentUser.username}</h2>
                   <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/20 text-xs font-medium border border-white/20">
-                    {currentUser.membership_tier || 'Thành viên mới'}
+                    {currentTier.name} MEMBER
                   </div>
                 </>
               ) : (
@@ -80,21 +134,21 @@ export function ProfilePage({ userPoints, orders, onOpenLogin, currentUser }: Pr
                   Tea Leaves
                   <span className="text-lg">🍂</span>
                 </div>
-                <div className="text-3xl font-bold text-gray-800">{userPoints.teaLeaves}</div>
+                <div className="text-3xl font-bold text-gray-800">{currentUser?.rewardpoints || 0}</div>
               </div>
             </div>
             
-            {/* ❌ ĐÃ ẨN PHẦN VOUCHER */}
-            {/* <div className="bg-white border border-orange-100 rounded-xl p-6 flex items-center justify-between shadow-sm">
+            {/*PHẦN VOUCHER*/}
+            <div className="bg-white border border-orange-100 rounded-xl p-6 flex items-center justify-between shadow-sm">
               <div>
                 <div className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1 uppercase tracking-wider">
                   Voucher
                   <span className="text-lg">🎫</span>
                 </div>
-                <div className="text-3xl font-bold text-gray-800">{userPoints.vouchers}</div>
+                <div className="text-3xl font-bold text-gray-800">{vouchers.length}</div>
               </div>
             </div> 
-            */}
+  
           </div>
         </div>
 

@@ -2339,3 +2339,31 @@ html {
     transform: none;
   }
 }
+
+
+/* Hiệu ứng tia sáng quét ngang thẻ */
+@keyframes shimmer {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(150%); }
+}
+
+.animate-shimmer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 3s infinite;
+  transform: skewX(-12deg);
+}
+
+/* Định nghĩa các dải màu Kim loại (Metallic Gradients) */
+.silver-metallic {
+  background: linear-gradient(135deg, #4B5563 0%, #E5E7EB 50%, #4B5563 100%);
+}
+
+.gold-metallic {
+  background: linear-gradient(135deg, #926113 0%, #FDE68A 50%, #926113 100%);
+}
+
+.bronze-metallic {
+  background: linear-gradient(135deg, #633919 0%, #D97E41 50%, #633919 100%);
+}

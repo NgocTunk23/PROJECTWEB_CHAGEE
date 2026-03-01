@@ -48,6 +48,9 @@ public class Admin {
         if (this.permissionlevel == null) this.permissionlevel = 1; // Mặc định là Staff
     }
 
+    public String getFullname() { return fullname; }
+    public void setFullname(String fullname) { this.fullname = fullname; }
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     

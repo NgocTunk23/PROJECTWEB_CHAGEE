@@ -27,20 +27,20 @@ export interface Product {
 }
 
 export interface Store {
-  // --- 1. Các trường cũ (Giữ lại để không lỗi giao diện) ---
-  id: string;        // Sẽ map từ branchid
-  name: string;      // Sẽ map từ branchName
-  address: string;   // Sẽ map từ addressU
-  distance: string;  // Chuỗi hiển thị (VD: "2.5km")
-  prepTime: string;  // Thời gian chuẩn bị (Hardcode hoặc tính)
-  image?: string;    // Ảnh cửa hàng
+  // --- 1. Các trường cũ ---
+  id: string;        
+  name: string;      
+  address: string;   
+  distance: string;  
+  prepTime: string;  
+  image?: string;    
 
-  // --- 2. Các trường MỚI (Cần cho logic tính toán) ---
-  latitude?: number;       // Tọa độ Vĩ độ
-  longitude?: number;      // Tọa độ Kinh độ
-  openTime?: string;       // Giờ mở cửa
-  closeTime?: string;      // Giờ đóng cửa
-  isOpen?: boolean;     // <--- ĐÂY LÀ DÒNG QUAN TRỌNG ĐỂ HẾT LỖI "isOpen"
+  // --- 2. Các trường MỚI ---
+  latitude?: number;       
+  longitude?: number;      
+  openTime?: string;       
+  closeTime?: string;      
+  isOpen?: boolean;     
   // Biến phụ để sắp xếp (ẩn)
   _sortDistance?: number;  // Khoảng cách dạng số (km)
 }
@@ -101,6 +101,28 @@ function App() {
   const [userPoints, setUserPoints] = useState({ teaLeaves: 0, vouchers: 0 });
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
+
+  // ✅ NEW: State lưu vị trí người dùng toàn cục
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  // ✅ NEW: Lấy vị trí ngay khi khởi động App
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          console.log("📍 Đã lấy vị trí thành công từ lúc khởi động");
+        },
+        (error) => {
+          console.error("❌ User từ chối hoặc lỗi GPS:", error);
+        },
+        { enableHighAccuracy: true }
+      );
+    }
+  }, []);
 
   // --- 1. LOGIN & REGISTER ---
   const handleLogin = async (username: string, password: string) => {
@@ -199,95 +221,116 @@ function App() {
 
   // --- 4. CHECKOUT & ORDER ---
   const handleCheckout = () => {
-    // Không nhận voucher nữa
     setShowCart(false);
     setShowCheckout(true);
   };
 
   const handleConfirmOrder = async (orderData: OrderData) => {
-    if (cartItems.length === 0 || !selectedStore || !currentUser) return;
+    if (cartItems.length === 0 || !selectedStore || !currentUser) return;
 
-    // 1. Tính tổng tiền
-    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const finalTotal = subtotal; 
+    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const finalTotal = subtotal; 
 
-    // 2. Chuẩn bị payload gửi đi
-    const orderPayload = {
-      user_id: currentUser.id,
-      total_price: finalTotal,
-      phone: orderData.customerPhone,
-      address: selectedStore.address,
-      note: orderData.note,
-      items: cartItems.map(item => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-          price: item.price,
-          note: `${item.size} | ${item.sugar} | ${item.ice}`,
-      }))
-    };
+    const orderPayload = {
+      user_id: currentUser.id,
+      total_price: finalTotal,
+      phone: orderData.customerPhone,
+      address: selectedStore.address,
+      note: orderData.note,
+      items: cartItems.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.price,
+          note: `${item.size} | ${item.sugar} | ${item.ice}`,
+      }))
+    };
 
-    try {
-      const response = await fetch('http://localhost:8080/api/orders/create', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentUser.token}`
-          },
-          body: JSON.stringify(orderPayload)
-      });
+    try {
+      const response = await fetch('http://localhost:8080/api/orders/create', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify(orderPayload)
+      });
 
-      if (response.ok) {
-        let savedOrder;
-        
-        // Xử lý response từ Backend (tránh lỗi JSON)
-        try {
-            const text = await response.text();
-            try {
-                savedOrder = JSON.parse(text);
-            } catch {
-                console.log("Backend trả về text: ", text);
-                // Tạo order giả lập để hiển thị bill nếu backend không trả về JSON chuẩn
-                savedOrder = {
-                    id: `ORDER_${Date.now()}`,
-                    items: [...cartItems],
-                    store: selectedStore,
-                    status: 'pending',
-                    totalPrice: finalTotal,
-                    customerName: orderData.customerName,
-                    customerPhone: orderData.customerPhone,
-                    paymentMethod: orderData.paymentMethod,
-                    orderTime: new Date()
-                };
-            }
-        } catch (e) {
-            console.error("Lỗi xử lý response:", e);
-        }
+      if (response.ok) {
+        let savedOrder;
+        try {
+            const text = await response.text();
+            try {
+                savedOrder = JSON.parse(text);
+            } catch {
+                savedOrder = {
+                    id: `ORDER_${Date.now()}`,
+                    items: [...cartItems],
+                    store: selectedStore,
+                    status: 'pending',
+                    totalPrice: finalTotal,
+                    customerName: orderData.customerName,
+                    customerPhone: orderData.customerPhone,
+                    paymentMethod: orderData.paymentMethod,
+                    orderTime: new Date()
+                };
+            }
+        } catch (e) {
+            console.error("Lỗi xử lý response:", e);
+        }
 
-        // --- QUAN TRỌNG: RESET GIỎ HÀNG TẠI ĐÂY ---
-        // 1. Xóa State để giao diện UI trống ngay lập tức
         setCartItems([]); 
-
-        // 2. Gọi Service để xóa đúng key 'my_cart_items' trong LocalStorage
         CartService.clearCart(); 
         
-        // (Bỏ 2 dòng localStorage.removeItem thủ công cũ đi vì nó sai tên key)
-
-        // 👆👆👆 HẾT PHẦN SỬA 👆👆👆
-
         if (savedOrder) {
             setOrders(prev => [savedOrder, ...prev]);
             setPendingOrder(savedOrder);
             setShowCheckout(false);
             setShowOrderConfirmation(true);
         }
-      } else {
-        alert("Đặt hàng thất bại, vui lòng thử lại!");
-      }
-    } catch (error) {
-      console.error("Lỗi đặt hàng:", error);
-      alert("Có lỗi kết nối đến server!");
-    }
-  };
+      } else {
+        alert("Đặt hàng thất bại, vui lòng thử lại!");
+      }
+    } catch (error) {
+      console.error("Lỗi đặt hàng:", error);
+      alert("Có lỗi kết nối đến server!");
+    }
+  };
+
+  // --- Thêm các dòng này vào phần State của App.tsx ---
+  const [appliedVoucher, setAppliedVoucher] = useState<any | null>(null);
+  const [discount, setDiscount] = useState(0);
+
+  // Tính Tạm tính (subtotal) từ giỏ hàng hiện tại
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  // Tính Tổng cộng cuối cùng
+  const total = subtotal - discount;
+
+  // Hàm xử lý khi người dùng chọn/hủy mã giảm giá
+  const handleApplyVoucher = (voucher: any | null) => {
+    setAppliedVoucher(voucher);
+    
+    if (!voucher) {
+      setDiscount(0);
+      return;
+    }
+
+    let amount = 0;
+    // 1. Ưu tiên tính theo phần trăm nếu có
+    if (voucher.discountpercentage && voucher.discountpercentage > 0) {
+      amount = (subtotal * voucher.discountpercentage) / 100;
+      // Chặn mức giảm tối đa (maxdiscount) nếu có trong DB
+      if (voucher.maxdiscount && amount > voucher.maxdiscount) {
+        amount = voucher.maxdiscount;
+      }
+    } 
+    // 2. Nếu không có phần trăm thì lấy số tiền cố định
+    else if (voucher.discountamount) {
+      amount = voucher.discountamount;
+    }
+
+    setDiscount(amount);
+  };
 
   // --- 5. RENDER TRANG ---
   const renderPage = () => {
@@ -295,10 +338,10 @@ function App() {
       case 'home':
         return (
           <HomePage
-            userPoints={userPoints}
             selectedStore={selectedStore}
             onSelectStore={() => setIsStoreSelectorOpen(true)}
             onNavigateToMenu={() => setCurrentPage('menu')}
+            currentUser={currentUser}
           />
         );
       case 'menu':
@@ -329,8 +372,6 @@ function App() {
   };
 
   // --- MAIN UI ---
-  
-  // 1. Nếu chưa đăng nhập -> Hiện Form Login
   if (!currentUser) {
     return (
       <LoginPage
@@ -341,7 +382,6 @@ function App() {
     );
   }
 
-  // 2. Nếu đã đăng nhập -> Hiện App
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
       <div className="md:max-w-7xl md:mx-auto md:flex md:gap-6 md:py-6">
@@ -406,6 +446,7 @@ function App() {
             setIsStoreSelectorOpen(false);
           }}
           onClose={() => setIsStoreSelectorOpen(false)}
+          userLocation={userLocation} // ✅ TRUYỀN USER LOCATION XUỐNG
         />
       )}
 
@@ -432,13 +473,22 @@ function App() {
         <CheckoutPage
           cartItems={cartItems}
           selectedStore={selectedStore}
-          appliedVoucher={null} // Cố định null
-          subtotal={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
-          discount={0} // Cố định 0
-          total={cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+          
+          // ✅ THAY null BẰNG BIẾN STATE
+          appliedVoucher={appliedVoucher} 
+          
+          subtotal={subtotal}
+          
+          // ✅ THAY 0 BẰNG BIẾN STATE
+          discount={discount} 
+          
+          // ✅ DÙNG BIẾN TỔNG ĐÃ TÍNH TOÁN
+          total={total} 
+          
           onConfirmOrder={handleConfirmOrder}
           onBack={() => { setShowCheckout(false); setShowCart(true); }}
           currentUser={currentUser}
+          onApplyVoucher={handleApplyVoucher}
         />
       )}
 
@@ -460,7 +510,6 @@ function App() {
       {cartItems.length > 0 && !showCart && !showCheckout && (
         <button 
           onClick={() => setShowCart(true)} 
-          // Tăng bottom-20 để tránh bị thanh Mobile Nav che khuất
           className="fixed bottom-20 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-[9999] hover:scale-110 active:scale-95 transition-transform md:bottom-10"
         >
           <ShoppingBag size={24} />
