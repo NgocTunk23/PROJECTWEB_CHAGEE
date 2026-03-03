@@ -2,21 +2,23 @@ package com.example.chagee.dto;
 
 import java.util.List;
 import java.math.BigDecimal;
+
 public class OrderRequest {
     
-    private String buyerusername; // Thay cho user_id
-    private BigDecimal originalprice; // Thay cho total_price
-    private String paymentmethod; // Thêm để khớp SQL
-    private String branchid;      // Thêm để khớp SQL
-    private List<OrderItemRequest> items;
-
-    // ⚠️ ĐÃ BỎ: address, phone (Vì Database không có cột này trong bảng Orders)
+    private String buyerusername;  // Tên đăng nhập người mua
+    private BigDecimal originalprice; // Tổng tiền cuối cùng
+    private String paymentmethod;   // Phương thức thanh toán (COD, VNPay...)
+    private String branchid;        // ID chi nhánh
+    private String phonenumber;     // Số điện thoại nhận hàng
+    private String address;         // Địa chỉ cửa hàng/nhận hàng
+    private String vouchercode;     // Mã giảm giá đã áp dụng
+    private List<OrderItemRequest> items; // Danh sách món ăn
 
     public OrderRequest() {
     }
 
     // ==========================================
-    // GETTERS & SETTERS (Viết liền theo SQL)
+    // GETTERS & SETTERS (Đồng bộ với Controller)
     // ==========================================
     public String getBuyerusername() { return buyerusername; }
     public void setBuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
@@ -30,6 +32,15 @@ public class OrderRequest {
     public String getBranchid() { return branchid; }
     public void setBranchid(String branchid) { this.branchid = branchid; }
 
+    public String getPhonenumber() { return phonenumber; }
+    public void setPhonenumber(String phonenumber) { this.phonenumber = phonenumber; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getVouchercode() { return vouchercode; }
+    public void setVouchercode(String vouchercode) { this.vouchercode = vouchercode; }
+
     public List<OrderItemRequest> getItems() { return items; }
     public void setItems(List<OrderItemRequest> items) { this.items = items; }
 
@@ -38,10 +49,10 @@ public class OrderRequest {
     // ==========================================
     public static class OrderItemRequest {
         
-        private String productid; // Thay cho product_id
+        private String productid; 
         private Integer quantity;
         private BigDecimal price;
-        private String note; 
+        private String note; // Lưu thông tin Size, Đường, Đá
 
         public OrderItemRequest() {
         }

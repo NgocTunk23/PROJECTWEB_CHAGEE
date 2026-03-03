@@ -52,19 +52,27 @@ export function ProfilePage({ userPoints, orders, onOpenLogin, currentUser }: Pr
 
   const currentTier = getMemberTier(currentUser?.rewardpoints || 0);
 
-  // ✅ Thêm useEffect để lấy số lượng voucher khi trang web load
   useEffect(() => {
-    const fetchVouchers = async () => {
-      if (!currentUser?.token) return;
+    const fetchMyVouchers = async () => {
       try {
-        const data = await VoucherService.getVouchers(undefined, currentUser.token);
+        // 1. Kiểm tra xem có đủ thông tin User không
+        if (!currentUser?.username || !currentUser?.token) return;
+
+        // 2. ✅ ĐỔI HÀM: Dùng getAvailableVouchers để lấy mã dành riêng cho User
+        // Truyền đúng 2 tham số: username và token
+        const data = await VoucherService.getAvailableVouchers(
+          currentUser.username, 
+          currentUser.token
+        );
+        
         setVouchers(data);
       } catch (error) {
         console.error("Lỗi lấy voucher tại Profile:", error);
       }
     };
-    fetchVouchers();
-  }, [currentUser]);
+
+    fetchMyVouchers();
+  }, [currentUser?.username, currentUser?.token]); // Chạy lại khi User thay đổi
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

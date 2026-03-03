@@ -48,7 +48,7 @@ public class AuthController {
                 // Lấy fullname, nếu null thì lấy tạm username
                 String fullname = (admin.getFullname() != null) ? admin.getFullname() : admin.getUsername();
                 
-                return ResponseEntity.ok(new JwtResponse(token, admin.getUsername(), role, 0, fullname));
+                return ResponseEntity.ok(new JwtResponse(token, admin.getUsername(), role, 0, fullname, admin.getPhonenumber()));
             }
         }
 
@@ -64,7 +64,7 @@ public class AuthController {
                 // Lấy fullname (đã đồng bộ viết thường)
                 String fullname = buyer.getFullname(); 
                 
-                return ResponseEntity.ok(new JwtResponse(token, buyer.getUsername(), role, points, fullname));
+                return ResponseEntity.ok(new JwtResponse(token, buyer.getUsername(), role, points, fullname, buyer.getPhonenumber()));
             }
         }
 
@@ -120,13 +120,15 @@ public class AuthController {
         private String role;
         private int rewardpoints;
         private String fullname; // ✅ Đã sửa thành viết thường 100%
+        private String phonenumber;
 
-        public JwtResponse(String accessToken, String username, String role, int rewardpoints, String fullname) {
+        public JwtResponse(String accessToken, String username, String role, int rewardpoints, String fullname, String phonenumber) {
             this.token = accessToken;
             this.username = username;
             this.role = role;
             this.rewardpoints = rewardpoints;
             this.fullname = fullname;
+            this.phonenumber = phonenumber;
         }
 
         // Getters and Setters
@@ -142,6 +144,8 @@ public class AuthController {
         public void setRewardpoints(int rewardpoints) { this.rewardpoints = rewardpoints; }
         public String getFullname() { return fullname; }
         public void setFullname(String fullname) { this.fullname = fullname; }
+        public String getPhonenumber() { return phonenumber; }
+        public void setPhonenumber(String phonenumber) { this.phonenumber = phonenumber; }
     }
 
     public static class MessageResponse {

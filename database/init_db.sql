@@ -200,6 +200,8 @@ CREATE TABLE Orders (
     buyerusername VARCHAR(255), -- Người mua
     branchid VARCHAR(255),
 
+    vouchercode VARCHAR(50), -- ⚠️ PHẢI CÓ DÒNG NÀY NÈ ÔNG TÔN!
+
     FOREIGN KEY (buyerusername) REFERENCES Buyers(username), -- Chỉ liên kết với Buyers
     FOREIGN KEY (branchid) REFERENCES Branches(branchid)
 );
@@ -274,6 +276,46 @@ CREATE TABLE OrderDetails (
     FOREIGN KEY (productid) REFERENCES Products(productid)
 );
 GO
+
+
+
+-- =============================================
+-- BỔ SUNG: BẢNG QUẢN LÝ VOUCHER CỦA TỪNG NGƯỜI
+-- =============================================
+-- Xóa bảng cũ và tạo lại với cột usage_left
+IF OBJECT_ID('UserVouchers', 'U') IS NOT NULL DROP TABLE UserVouchers;
+
+CREATE TABLE UserVouchers (
+    username VARCHAR(255),
+    vouchercode VARCHAR(255),
+    usage_left INT DEFAULT 3, -- ✅ Số lần còn lại (Mặc định là 3)
+    PRIMARY KEY (username, vouchercode),
+    FOREIGN KEY (username) REFERENCES Buyers(username),
+    FOREIGN KEY (vouchercode) REFERENCES Vouchers(vouchercode)
+);
+GO
+
+
+-- ✅ TRIGGER: TỰ ĐỘNG TRỪ LƯỢT KHI CÓ ĐƠN HÀNG MỚI
+GO
+CREATE OR ALTER TRIGGER trg_UpdateUsageLeft
+ON Orders -- ⚠️ Bắt buộc phải là bảng Orders (vì đơn hàng lưu ở đây)
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Thực hiện trừ 1 lượt dùng trong bảng UserVouchers
+    UPDATE uv
+    SET uv.usage_left = uv.usage_left - 1
+    FROM UserVouchers uv
+    INNER JOIN inserted i ON uv.vouchercode = i.vouchercode 
+    -- 'inserted' là bảng tạm chứa dữ liệu vừa INSERT vào 'Orders'
+    WHERE uv.username = i.buyerusername 
+      AND i.vouchercode IS NOT NULL; -- Chỉ chạy khi đơn hàng thực sự có dùng mã
+END;
+GO
+
 
 -- =============================================
 -- DATA
@@ -398,6 +440,22 @@ INSERT INTO Vouchers (
 ('B2G1FREE', N'Mua 2 Tặng 1 - Member Mới', NULL, NULL, NULL, 80000, '2026-04-01', 'manager01');
 GO
 
+-- Chèn lại dữ liệu mẫu
+INSERT INTO UserVouchers (username, vouchercode, usage_left)
+VALUES 
+-- Member 01: Mã Oolong còn 3 lần, mã 30k còn 2 lần (đã xài 1), mã B2G1 còn 0 lần (ẩn)
+('member01', 'DISCOUNT10', 1), 
+('member01', 'CASH30K', 1),    
+('member01', 'B2G1FREE', 1),   
+
+-- Member 02: Còn nguyên 3 lần cho tất cả các mã
+('member02', 'CASH30K', 1),
+('member02', 'DISCOUNT10', 1),
+('member02', 'B2G1FREE', 0);
+GO
+
+
+
 -- -- =============================================
 -- -- 6. VOUCHER APPLIED
 -- -- =============================================
@@ -472,4 +530,4 @@ GO
 -- SELECT * FROM Orders;        --10
 -- SELECT * FROM OrderDetails;  --11
 -- SELECT * FROM OrderVouchers; --12
--- SELECT * FROM Transactions;  --13
+SELECT * FROM UserVouchers;  --13

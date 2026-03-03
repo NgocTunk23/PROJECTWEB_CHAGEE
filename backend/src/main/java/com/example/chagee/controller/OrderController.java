@@ -5,7 +5,11 @@ import com.example.chagee.entity.Order;
 import com.example.chagee.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -16,45 +20,63 @@ public class OrderController {
     private OrderRepository orderRepository;
 
     @PostMapping("/create")
+    @Transactional
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderData) {
+        System.out.println("🚀 [DEBUG] Nhận yêu cầu tạo đơn hàng cho: " + orderData.getBuyerusername());
+
         try {
-            // 1. Tạo đơn hàng cha (Order)
             Order newOrder = new Order();
-
-            // Gán các trường từ Request (Đã đổi tên viết liền không gạch dưới)
-            newOrder.setBuyerusername(orderData.getBuyerusername()); 
+            newOrder.setBuyerusername(orderData.getBuyerusername());
             newOrder.setOriginalprice(orderData.getOriginalprice());
-            newOrder.setPaymentmethod(orderData.getPaymentmethod());
-            newOrder.setBranchid(orderData.getBranchid());
+            newOrder.setVouchercode(orderData.getVouchercode());
             
-            // Lưu ý: orderid, ordertime, statusU, taxprice đã có giá trị mặc định trong Entity
+            // ✅ FIX 1: Gán SĐT và Địa chỉ từ request gửi lên
+            // Đảm bảo OrderRequest.java của ông đã có 2 trường này
+            newOrder.setPhonenumber(orderData.getPhonenumber()); 
+            newOrder.setAddress(orderData.getAddress());
+            
+            newOrder.setPaymentmethod(orderData.getPaymentmethod());
+            newOrder.setOrdertime(new java.util.Date());
+            newOrder.setStatusU("Đang xử lý");
 
-            // 2. Tạo danh sách chi tiết đơn hàng (OrderDetails)
             if (orderData.getItems() != null) {
+                List<Order.OrderDetail> details = new ArrayList<>();
                 for (OrderRequest.OrderItemRequest itemReq : orderData.getItems()) {
-                    
                     Order.OrderDetail detail = new Order.OrderDetail();
-                    
-                    // Gán các trường chi tiết (Viết liền khớp SQL)
                     detail.setProductid(itemReq.getProductid());
                     detail.setQuantity(itemReq.getQuantity());
-                    detail.setPrice(itemReq.getPrice()); // Đã mở lại vì SQL có cột price
-                    detail.setNote(itemReq.getNote());   // Đã mở lại vì SQL có cột note
-                    
-                    // Gắn liên kết 2 chiều giữa cha và con
+                    detail.setPrice(itemReq.getPrice());
+                    detail.setNote(itemReq.getNote()); // Ghi chú: Size, Sugar, Ice...
                     detail.setOrder(newOrder);
-                    newOrder.getOrderDetails().add(detail);
+                    details.add(detail);
                 }
+                newOrder.setOrderDetails(details);
             }
 
-            // 3. Lưu xuống Database (CascadeType.ALL sẽ tự lưu luôn các OrderDetail)
             Order savedOrder = orderRepository.save(newOrder);
+            System.out.println("✅ [DEBUG] Đã lưu đơn hàng thành công ID: " + savedOrder.getOrderid());
 
-            return ResponseEntity.ok("Đặt hàng thành công! Mã đơn: " + savedOrder.getOrderid());
+            return ResponseEntity.ok(savedOrder); // Trả về cả object vừa lưu để frontend update
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+            System.err.println("❌ [LỖI TẠO ĐƠN]: " + e.getMessage());
+            e.printStackTrace(); 
+            return ResponseEntity.status(500).body("Lỗi Backend: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/user/{username}")
+    public ResponseEntity<?> getOrdersByUsername(@PathVariable String username) {
+        System.out.println("🔍 [DEBUG] Đang lấy lịch sử đơn hàng kèm tên sản phẩm cho: " + username);
+        try {
+            // ✅ SỬA CHỖ NÀY: Dùng hàm có FETCH để lấy luôn thông tin Product
+            // Đổi từ findByBuyerusername -> findAllByBuyerusernameWithDetails
+            List<Order> orders = orderRepository.findAllByBuyerusernameWithDetails(username);
+            
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            System.err.println("❌ [LỖI LẤY ĐƠN HÀNG]: " + e.getMessage());
+            return ResponseEntity.status(500).body("Lỗi Backend: " + e.getMessage());
         }
     }
 }

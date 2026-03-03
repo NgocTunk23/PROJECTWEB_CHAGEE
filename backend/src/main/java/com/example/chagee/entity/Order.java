@@ -5,45 +5,52 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.math.BigDecimal; // ✅ Nhớ import BigDecimal
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "Orders")
 public class Order {
 
-    // ========================================================================
-    // 1. THÔNG TIN ĐƠN HÀNG (Dùng tên viết liền theo SQL)
-    // ========================================================================
-    
     @Id
-    @Column(name = "orderid", length = 255) // Khớp: orderid VARCHAR(255)
+    @Column(name = "orderid", length = 255)
     private String orderid; 
 
-    @Column(name = "buyerusername") // Khớp: buyerusername VARCHAR(255)
+    @Column(name = "buyerusername")
     private String buyerusername;
 
-    @Column(name = "originalprice") // Khớp: originalprice DECIMAL(18, 2)
+    @Column(name = "phonenumber") 
+    private String phonenumber;
+
+    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
+    private String address;
+
+    @Column(name = "vouchercode")
+    private String vouchercode;
+
+    @Column(name = "originalprice")
     private BigDecimal originalprice;
 
-    @Column(name = "taxprice") // Khớp: taxprice DECIMAL(18, 2)
+    @Column(name = "taxprice")
     private BigDecimal taxprice = BigDecimal.ZERO;
 
-    @Column(name = "statusU", columnDefinition = "NVARCHAR(255)") // Khớp: statusU NVARCHAR(255)
+    @Column(name = "statusU", columnDefinition = "NVARCHAR(255)")
     private String statusU = "Pending";
 
-    @Column(name = "paymentmethod", columnDefinition = "NVARCHAR(255)") // Khớp: paymentmethod NVARCHAR(255)
+    @Column(name = "paymentmethod", columnDefinition = "NVARCHAR(255)")
     private String paymentmethod;
 
-    @Column(name = "ordertime") // Khớp: ordertime DATETIME
+    @Column(name = "ordertime")
     @Temporal(TemporalType.TIMESTAMP)
     private Date ordertime;
 
-    @Column(name = "branchid") // Khớp: branchid VARCHAR(255)
+    @Column(name = "branchid")
     private String branchid;
 
-    // ========================================================================
-    // 2. QUAN HỆ VỚI CHI TIẾT ĐƠN HÀNG
-    // ========================================================================
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<OrderDetail> orderDetails = new ArrayList<>();
 
     public Order() {
@@ -53,38 +60,34 @@ public class Order {
         }
     }
 
-    // ========================================================================
-    // 3. GETTERS & SETTERS (Đã đổi tên theo biến viết liền)
-    // ========================================================================
+    // Getters & Setters
     public String getOrderid() { return orderid; }
     public void setOrderid(String orderid) { this.orderid = orderid; }
-
     public String getBuyerusername() { return buyerusername; }
     public void setBuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
-
+    public String getPhonenumber() { return phonenumber; }
+    public void setPhonenumber(String phonenumber) { this.phonenumber = phonenumber; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getVouchercode() { return vouchercode; }
+    public void setVouchercode(String vouchercode) { this.vouchercode = vouchercode; }
     public BigDecimal getOriginalprice() { return originalprice; }
     public void setOriginalprice(BigDecimal originalprice) { this.originalprice = originalprice; }
-
     public BigDecimal getTaxprice() { return taxprice; }
     public void setTaxprice(BigDecimal taxprice) { this.taxprice = taxprice; }
-
     public String getStatusU() { return statusU; }
     public void setStatusU(String statusU) { this.statusU = statusU; }
-
     public String getPaymentmethod() { return paymentmethod; }
     public void setPaymentmethod(String paymentmethod) { this.paymentmethod = paymentmethod; }
-
     public Date getOrdertime() { return ordertime; }
     public void setOrdertime(Date ordertime) { this.ordertime = ordertime; }
-
     public String getBranchid() { return branchid; }
     public void setBranchid(String branchid) { this.branchid = branchid; }
-
     public List<OrderDetail> getOrderDetails() { return orderDetails; }
     public void setOrderDetails(List<OrderDetail> orderDetails) { this.orderDetails = orderDetails; }
 
     // ========================================================================
-    // 4. CLASS CON: ORDER DETAIL (Dùng tên viết liền theo SQL)
+    // CLASS CON: ORDER DETAIL (ĐÃ FIX ĐỂ LẤY TÊN SẢN PHẨM)
     // ========================================================================
     @Entity
     @Table(name = "OrderDetails")
@@ -92,23 +95,33 @@ public class Order {
         
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        @Column(name = "id") // Khớp: id BIGINT IDENTITY
+        @Column(name = "id")
         private Long id;
 
-        @ManyToOne
-        @JoinColumn(name = "orderid") // Khớp: orderid VARCHAR(255)
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "orderid")
+        @JsonBackReference
         private Order order;
 
-        @Column(name = "productid") // Khớp: productid VARCHAR(255)
+        // ✅ CHỖ NÀY QUAN TRỌNG: Liên kết với bảng Products
+        @ManyToOne(fetch = FetchType.EAGER)
+        @JoinColumn(name = "productid", insertable = false, updatable = false)
+        @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Thêm dòng này cho chắc
+        private Product product;
+
+
+
+
+        @Column(name = "productid")
         private String productid;
         
-        @Column(name = "quantity") // Khớp: quantity INT
+        @Column(name = "quantity")
         private Integer quantity;
 
-        @Column(name = "price") // Khớp: price DECIMAL
+        @Column(name = "price")
         private BigDecimal price;
 
-        @Column(name = "note", columnDefinition = "NVARCHAR(MAX)") // Khớp: note NVARCHAR
+        @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
         private String note;
 
         public OrderDetail() {}
@@ -118,6 +131,11 @@ public class Order {
         public void setId(Long id) { this.id = id; }
         public Order getOrder() { return order; }
         public void setOrder(Order order) { this.order = order; }
+        
+        // Getter cho Product để React lấy được name/image
+        public Product getProduct() { return product; }
+        public void setProduct(Product product) { this.product = product; }
+
         public String getProductid() { return productid; }
         public void setProductid(String productid) { this.productid = productid; }
         public Integer getQuantity() { return quantity; }

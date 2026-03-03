@@ -1,6 +1,7 @@
 import { CheckCircle, Home, CreditCard, MapPin, Clock } from 'lucide-react';
 import { Store } from '../App';
 import { OrderData } from './CheckoutPage';
+import { Voucher } from './CartPage';
 
 interface OrderConfirmationProps {
   orderId: string;
@@ -9,6 +10,8 @@ interface OrderConfirmationProps {
   total: number;
   onPayNow: () => void;
   onBackToHome: () => void;
+  // ✅ THÊM DÒNG NÀY (Dùng dấu ? vì có thể đơn hàng không có voucher)
+  appliedVoucher?: Voucher | null; 
 }
 
 export function OrderConfirmation({
@@ -17,7 +20,8 @@ export function OrderConfirmation({
   selectedStore,
   total,
   onPayNow,
-  onBackToHome
+  onBackToHome,
+  appliedVoucher // ✅ Nhận thêm biến này ở đây
 }: OrderConfirmationProps) {
   const isOnlinePayment = orderData.paymentMethod !== 'COD';
 

@@ -68,24 +68,34 @@ export function HomePage({
     };
   };
 
-  useEffect(() => {
-    const fetchVouchers = async () => {
-      if (!currentUser?.token) return;
+  // Trong HomePage.tsx
+useEffect(() => {
+  const fetchVouchers = async () => {
+    try {
+      setIsLoadingVouchers(true);
+      let data = [];
 
-      try {
-        setIsLoadingVouchers(true);
-        // ✅ SỬA: Để trống (undefined) thay vì truyền tên category
-        const data = await VoucherService.getVouchers(undefined, currentUser.token);
-        setVouchers(data);
-      } catch (error) {
-        console.error("Lỗi lấy voucher:", error);
-      } finally {
-        setIsLoadingVouchers(false);
+      // ✅ LOGIC QUAN TRỌNG: Phân biệt đối xử
+      if (currentUser?.username && currentUser?.token) {
+        // Nếu là member01, chỉ lấy những mã họ CHƯA dùng (Kết quả sẽ là 3 hoặc 2 tùy người)
+        data = await VoucherService.getAvailableVouchers(currentUser.username, currentUser.token);
+        console.log(`[Cá nhân] Đã lấy mã cho ${currentUser.username}:`, data.length);
+      } else {
+        // Nếu là khách vãng lai, lấy tất cả mã đang có trên hệ thống
+        data = await VoucherService.getVouchers('all', currentUser?.token);
+        console.log("[Chung] Đã lấy tất cả mã hệ thống:", data.length);
       }
-    };
-
-    fetchVouchers();
-  }, [currentUser]);
+      
+      setVouchers(data);
+    } catch (error) {
+      console.error("Lỗi fetch voucher:", error);
+    } finally {
+      setIsLoadingVouchers(false); // ✅ Nhớ tắt loading để giao diện cập nhật số lượng
+    }
+  };
+  
+  fetchVouchers();
+}, [currentUser?.username, currentUser?.token]); // Chạy lại khi đổi User
   const status = getMembershipStatus(currentUser?.rewardpoints || 0);
   return (
     <div className="min-h-screen bg-white">

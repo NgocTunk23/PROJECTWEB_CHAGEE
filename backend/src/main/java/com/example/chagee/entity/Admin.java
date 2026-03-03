@@ -62,4 +62,7 @@ public class Admin {
 
     public Integer getPermissionlevel() { return permissionlevel; }
     public void setPermissionlevel(Integer permissionlevel) { this.permissionlevel = permissionlevel; }
+
+    public String getPhonenumber() { return phonenumber; }
+    public void setPhonenumber(String phonenumber) { this.phonenumber = phonenumber; }
 }

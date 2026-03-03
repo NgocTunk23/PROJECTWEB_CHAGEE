@@ -1,18 +1,102 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Order } from '../App';
 import { Clock, MapPin, ChevronRight, ShoppingBag, CheckCircle2, XCircle, X, Store } from 'lucide-react';
 
 interface OrdersPageProps {
-  orders: Order[];
+  currentUser: any; 
   onOrderNow: () => void;
 }
 
-export function OrdersPage({ orders, onOrderNow }: OrdersPageProps) {
-  
-  // 1. State để lưu đơn hàng đang được xem chi tiết (Mặc định là null = không xem gì cả)
+export function OrdersPage({ currentUser, onOrderNow }: OrdersPageProps) {
+  // 1. State quản lý dữ liệu
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // 2. Phân loại đơn hàng
+  // 2. Gọi API lấy đơn hàng khi vào trang
+  useEffect(() => {
+    const fetchOrders = async () => {
+      // 1. Kiểm tra xem người dùng đã đăng nhập và có Token chưa
+      if (!currentUser || !currentUser.token) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        
+        // 2. Thêm Header Authorization để fix lỗi 403 
+        const response = await fetch(
+          `http://localhost:8080/api/orders/user/${currentUser.username || 'member01'}`, 
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentUser.token}` // 🔑 Chìa khóa ở đây nè
+            }
+          }
+        );
+        
+        if (response.ok) {
+
+            const data = await response.json();
+            console.log("🔥 Dữ liệu thô từ API:", data); // 👈 Thêm dòng này
+
+          // 3. MAPPING dữ liệu
+          const mappedOrders = data.map((o: any) => ({
+  id: o.orderid,
+  status: o.statusU || 'pending', // Sửa từ status sang statusU
+  totalPrice: o.originalprice,
+  orderTime: o.ordertime,
+  customerName: o.buyerusername,
+  customerPhone: o.phonenumber || "N/A",
+  address: o.address || "Nhận tại cửa hàng",
+  paymentMethod: o.paymentmethod || "Tiền mặt",
+
+  store: {
+    // Nếu branchid bị null thì hiện tên mặc định để tránh để trống ô hồng
+    name: o.branchid ? `Chi nhánh ${o.branchid}` : "Cửa hàng Chagee Flagship",
+    address: o.address || "Địa chỉ đang cập nhật..."
+  },
+  
+  items: (o.orderDetails || []).map((detail: any) => {
+    // Lưu ý: detail.product chứa thông tin món
+    const p = detail.product || {}; 
+    
+    return {
+      product: {
+        id: detail.productid,
+        // ✅ Sửa ở đây: dùng productname (viết thường)
+        name: p.productname || "Sản phẩm không tên", 
+        // ✅ Sửa ở đây: dùng productimage
+        image: p.productimage
+      },
+      quantity: detail.quantity,
+      price: detail.price,
+      // Xử lý ghi chú nếu có (ví dụ: "Size L | 50% Sugar")
+      size: detail.note ? detail.note.split(' | ')[0] : 'M',
+      sugar: detail.note ? detail.note.split(' | ')[1] : '100%',
+      ice: detail.note ? detail.note.split(' | ')[2] : 'Bình thường'
+    };
+  })
+}));
+          setOrders(mappedOrders);
+        } else if (response.status === 403) {
+          console.error("❌ Lỗi 403: Token hết hạn hoặc không có quyền truy cập!");
+        } else {
+          console.error(`❌ Lỗi API: ${response.status}`);
+        }
+      } catch (error) {
+        console.error("❌ Lỗi fetch đơn hàng:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [currentUser]);
+
+  // 3. Phân loại đơn hàng
   const successOrders = orders.filter(o => o.status !== 'cancelled');
   const cancelledOrders = orders.filter(o => o.status === 'cancelled');
 
@@ -42,7 +126,6 @@ export function OrdersPage({ orders, onOrderNow }: OrdersPageProps) {
   // --- COMPONENT CON: CARD ĐƠN HÀNG ---
   const OrderCard = ({ order }: { order: Order }) => (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-4">
-      {/* Header */}
       <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-50">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -67,9 +150,8 @@ export function OrdersPage({ orders, onOrderNow }: OrdersPageProps) {
         </div>
       </div>
 
-      {/* Body: Danh sách món (rút gọn) */}
       <div className="space-y-3">
-         {order.items.map((item, idx) => (
+         {order.items.slice(0, 2).map((item, idx) => (
             <div key={idx} className="flex gap-3">
                <img 
                   src={item.product.image} 
@@ -79,47 +161,50 @@ export function OrdersPage({ orders, onOrderNow }: OrdersPageProps) {
                <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 text-sm truncate">{item.product.name}</p>
                   <p className="text-xs text-gray-500">
-                     {item.size} • {item.sugar} • {item.ice}
+                     {item.size} • {item.quantity} phần
                   </p>
-                  <div className="flex justify-between mt-1">
-                     <span className="text-xs text-gray-500">x{item.quantity}</span>
-                  </div>
                </div>
             </div>
          ))}
+         {order.items.length > 2 && (
+           <p className="text-xs text-gray-400 text-center">...và {order.items.length - 2} món khác</p>
+         )}
       </div>
 
-      {/* Footer: Nút bấm */}
       <div className="pt-3 mt-3 border-t border-gray-50 flex gap-2">
-         {/* 👇 ĐÃ SỬA: Thêm onClick để mở Modal */}
          <button 
             onClick={() => setSelectedOrder(order)} 
             className="flex-1 py-2 bg-gray-50 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
          >
             Xem chi tiết <ChevronRight size={14}/>
          </button>
-         
-         {order.status === 'completed' && (
-            <button className="flex-1 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-               Đặt lại
-            </button>
-         )}
       </div>
     </div>
   );
 
+  // Màn hình Loading
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-gray-50 min-h-full">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-red-600 mb-4"></div>
+        <p className="text-gray-500 text-sm">Đang tải lịch sử đơn hàng...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 min-h-full pb-20">
-      <div className="bg-white p-4 shadow-sm sticky top-0 z-10 border-b border-gray-100">
-        <h1 className="text-xl font-bold text-gray-800 text-center">LỊCH SỬ ĐẶT HÀNG</h1>
+      <div className="bg-white p-4 shadow-sm sticky top-0 z-10 border-b border-gray-100 text-center">
+        <h1 className="text-xl font-bold text-gray-800 uppercase tracking-wide">Lịch sử đơn hàng</h1>
       </div>
 
       {orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
+          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
             <ShoppingBag size={32} />
           </div>
           <h2 className="text-lg font-medium text-gray-800 mb-2">Chưa có đơn hàng nào</h2>
+          <p className="text-gray-500 text-sm mb-6 text-center">Có vẻ như bạn chưa đặt món nào. Hãy khám phá menu ngay!</p>
           <button 
             onClick={onOrderNow}
             className="bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
@@ -133,9 +218,9 @@ export function OrdersPage({ orders, onOrderNow }: OrdersPageProps) {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="text-green-600" size={20} />
-                <h2 className="text-lg font-bold text-gray-800">Đơn hàng đã đặt ({successOrders.length})</h2>
+                <h2 className="text-lg font-bold text-gray-800">Đơn hàng hiện tại ({successOrders.length})</h2>
               </div>
-              <div>{successOrders.map(order => <OrderCard key={order.id} order={order} />)}</div>
+              {successOrders.map(order => <OrderCard key={order.id} order={order} />)}
             </div>
           )}
 
@@ -153,95 +238,73 @@ export function OrdersPage({ orders, onOrderNow }: OrdersPageProps) {
         </div>
       )}
 
-      {/* --- 👇 MODAL CHI TIẾT ĐƠN HÀNG (POPUP) --- */}
+     {/* MODAL CHI TIẾT ĐƠN HÀNG */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Lớp phủ đen mờ */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSelectedOrder(null)} // Bấm ra ngoài thì đóng
-          />
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
           
-          {/* Nội dung Modal */}
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col relative z-10 animate-in fade-in zoom-in-95 duration-200 shadow-xl">
-             
-             {/* Modal Header */}
-             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <div>
-                   <h3 className="font-bold text-lg text-gray-800">Chi tiết đơn hàng</h3>
-                   <p className="text-xs text-gray-500">#{selectedOrder.id}</p>
-                </div>
-                <button onClick={() => setSelectedOrder(null)} className="p-2 bg-white rounded-full text-gray-500 hover:bg-gray-100">
-                   <X size={20} />
-                </button>
-             </div>
+          {/* Main Modal Card */}
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col relative z-10 animate-in zoom-in-95 duration-200 shadow-2xl">
+            {/* Header */}
+            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-gray-800">Chi tiết đơn hàng</h3>
+              <button onClick={() => setSelectedOrder(null)} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
 
-             {/* Modal Body (Cuộn được) */}
-             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Thông tin cửa hàng */}
-                <div className="bg-red-50 p-3 rounded-xl border border-red-100 flex gap-3">
-                   <div className="bg-white p-2 rounded-lg h-fit">
-                      <Store size={20} className="text-red-600"/>
-                   </div>
-                   <div>
-                      <p className="font-bold text-gray-800">{selectedOrder.store?.name}</p>
-                      <p className="text-xs text-gray-600 mt-1">{selectedOrder.store?.address}</p>
-                   </div>
-                </div>
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+              {/* Shop Info */}
+              <div className="bg-red-50 p-3 rounded-xl border border-red-100">
+                <p className="font-bold text-red-800 flex items-center gap-2"><Store size={16} /> {selectedOrder.store?.name}</p>
+              </div>
 
-                {/* Thông tin khách hàng */}
-                <div className="space-y-1 text-sm bg-gray-50 p-3 rounded-xl">
-                   <p><span className="text-gray-500">Người nhận:</span> <span className="font-medium">{selectedOrder.customerName}</span></p>
-                   <p><span className="text-gray-500">SĐT:</span> <span className="font-medium">{selectedOrder.customerPhone}</span></p>
-                   <p><span className="text-gray-500">Thời gian:</span> <span className="font-medium">{new Date(selectedOrder.orderTime).toLocaleString('vi-VN')}</span></p>
-                   <p><span className="text-gray-500">Thanh toán:</span> <span className="font-medium uppercase">{selectedOrder.paymentMethod}</span></p>
-                   {selectedOrder.status === 'cancelled' && (
-                      <p className="text-red-600 font-bold mt-2">Đơn hàng đã bị hủy</p>
-                   )}
-                </div>
+              {/* Order Metadata */}
+              <div className="space-y-2 pb-4 border-b border-dashed">
+                <div className="flex justify-between"><span className="text-gray-500">Mã đơn:</span><span className="font-medium text-gray-800">#{selectedOrder.id}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Thời gian:</span><span className="font-medium">{new Date(selectedOrder.orderTime).toLocaleString('vi-VN')}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Phương thức thanh toán:</span><span className="font-medium uppercase text-blue-600">{selectedOrder.paymentMethod}</span></div>
+              </div>
 
-                {/* Danh sách món chi tiết */}
-                <div>
-                   <h4 className="font-bold text-gray-800 mb-2 text-sm">Danh sách món</h4>
-                   <div className="space-y-3">
-                      {selectedOrder.items.map((item, idx) => (
-                         <div key={idx} className="flex gap-3 py-2 border-b border-gray-50 last:border-0">
-                            <img src={item.product.image} className="w-14 h-14 rounded-lg object-cover bg-gray-100" alt=""/>
-                            <div className="flex-1">
-                               <p className="font-medium text-gray-800 text-sm">{item.product.name}</p>
-                               <p className="text-xs text-gray-500 mt-0.5">
-                                  {item.size} • {item.sugar} • {item.ice}
-                               </p>
-                               {item.toppings?.length > 0 && (
-                                  <p className="text-xs text-gray-400">+ {item.toppings.join(', ')}</p>
-                               )}
-                               <div className="flex justify-between mt-1 text-sm">
-                                  <span className="text-gray-500">x{item.quantity}</span>
-                                  <span className="font-medium text-gray-800">{(item.price * item.quantity).toLocaleString()}đ</span>
-                               </div>
-                            </div>
-                         </div>
-                      ))}
-                   </div>
-                </div>
-             </div>
+              {/* Item List */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-gray-800 text-xs uppercase">Danh sách món</h4>
+                {selectedOrder.items.map((item, idx) => (
+                  <div key={idx} className="flex gap-3 py-3 border-b border-gray-50 last:border-0">
+                    <img 
+                      src={item.product.image || "https://img.freepik.com/free-vector/coffee-cup-logo-template_23-2148474401.jpg"} 
+                      className="w-14 h-14 rounded-lg object-cover bg-gray-100" 
+                      alt=""
+                      onError={(e) => { (e.currentTarget.src = "https://img.freepik.com/free-vector/coffee-cup-logo-template_23-2148474401.jpg") }}
+                    />
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-800">{item.product.name} <span className="text-red-600 ml-1">x{item.quantity}</span></p>
+                      <p className="text-[11px] text-gray-400 italic">{item.size} | {item.sugar} | {item.ice}</p>
+                      <div className="flex justify-between items-center mt-1">
+                         <span className="text-xs text-gray-400">Giá: {item.price.toLocaleString()}đ</span>
+                         <span className="font-semibold text-gray-800">{(item.price * item.quantity).toLocaleString()}đ</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-             {/* Modal Footer */}
-             <div className="p-4 border-t border-gray-100 bg-gray-50">
-                <div className="flex justify-between items-end mb-4">
-                   <span className="text-gray-600">Tổng tiền</span>
-                   <span className="text-2xl font-bold text-red-600">{selectedOrder.totalPrice.toLocaleString()}đ</span>
-                </div>
-                {selectedOrder.status === 'completed' ? (
-                   <button className="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200">
-                      Đặt lại đơn này
-                   </button>
-                ) : (
-                   <button onClick={() => setSelectedOrder(null)} className="w-full py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50">
-                      Đóng
-                   </button>
-                )}
-             </div>
+            {/* Footer */}
+            <div className="p-4 bg-gray-50 border-t">
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-bold text-gray-600">Tổng thanh toán</span>
+                <span className="text-xl font-black text-red-600">{selectedOrder.totalPrice.toLocaleString()}đ</span>
+              </div>
+              <button 
+                onClick={() => setSelectedOrder(null)} 
+                className="w-full py-3 bg-gray-800 text-white font-bold rounded-xl active:scale-95 transition-transform uppercase"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}
