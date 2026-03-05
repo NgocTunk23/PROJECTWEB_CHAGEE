@@ -45,12 +45,12 @@ export function ProductCustomizer({
         image: product.image,
         price: calculatePrice(),
         
-        size,
-        sugar,
-        ice,
+        // ✅ Gán rõ ràng: Tên_Thuộc_Tính: Giá_Trị_State
+        sizelevel: size,   // Sửa lỗi 18004 (No value exists in scope)
+        sugarlevel: sugar,
+        icelevel: ice,
         
         // 2. Thêm mảng rỗng cho toppings (để thỏa mãn TypeScript)
-        toppings: [], 
         
         quantity,
         store: { id: "store_temp", name: "Cửa hàng", address: "", distance: "", prepTime: "" }

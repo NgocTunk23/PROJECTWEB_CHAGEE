@@ -63,9 +63,9 @@ export interface CartItem {
   name: string;
   image: string;
   price: number;
-  size: string;
-  sugar: string;
-  ice: string;
+  sizelevel: string;  // Ông bốc giá trị từ 'size' bỏ vào cái túi tên là 'sizelevel'
+  sugarlevel: string;
+  icelevel: string;
   quantity: number;
   store: Store;
 }
@@ -80,6 +80,7 @@ export interface Order {
   customerPhone?: string;
   paymentMethod?: string;
   orderTime: Date;
+  note: string;
 }
 
 export interface SizeOption {
@@ -91,43 +92,44 @@ export interface CustomizationOptions {
   size: SizeOption[];
   sugar: string[];
   ice: string[];
-  toppings: string[];
 }
 
 function App() {
-  // State điều hướng & UI
+  // --- 1. State Điều hướng & UI ---
   const [currentPage, setCurrentPage] = useState<NavigationPage>('home');
-  // Trong App.tsx
-  const [selectedStore, setSelectedStore] = useState<Store | null>(() => {
-    // 1. Kiểm tra xem máy khách có đang lưu cửa hàng nào không
-    const savedStore = localStorage.getItem('selectedStore');
-    
-    // 2. Nếu có thì trả về object, không thì trả về null
-    return savedStore ? JSON.parse(savedStore) : null;
-  });
-
+  const [activeTab, setActiveTab] = useState('home'); // Sửa lỗi setActiveTab
   const [isStoreSelectorOpen, setIsStoreSelectorOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Sửa lỗi setIsLoading
+  const [step, setStep] = useState<'cart' | 'checkout' | 'confirmation'>('cart');
 
-  // State dữ liệu
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [userPoints, setUserPoints] = useState({ teaLeaves: 0, vouchers: 0 });
+  // --- 2. State Dữ liệu Người dùng & Điểm thưởng ---
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
+  const [userPoints, setUserPoints] = useState({ teaLeaves: 0, vouchers: 0 }); // Sửa lỗi userPoints
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null); // Sửa lỗi userLocation
 
-  // 1. Nhớ khai báo kiểu dữ liệu cho State để tránh lỗi "never"
+  // --- 3. State Giỏ hàng & Cửa hàng ---
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [selectedStore, setSelectedStore] = useState<Store | null>(() => {
+    const savedStore = localStorage.getItem('selectedStore');
+    return savedStore ? JSON.parse(savedStore) : null;
+  });
+
+  // --- 4. State Voucher ---
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
+  const [discount, setDiscount] = useState(0);
 
-  // ✅ NEW: State lưu vị trí người dùng toàn cục
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
-  const [activeTab, setActiveTab] = useState('home'); // Hoặc 'menu' tùy ông
+  // --- 5. State Đơn hàng & Xác nhận ---
+  const [orders, setOrders] = useState<Order[]>([]); // Sửa lỗi orders
+  const [pendingOrder, setPendingOrder] = useState<Order | null>(null); // Sửa lỗi pendingOrder
+  const [currentOrderId, setCurrentOrderId] = useState<string>('');
+  const [total, setTotal] = useState<number>(0);
+  const [confirmedOrderData, setConfirmedOrderData] = useState<OrderData | null>(null);
+
 
   // ✅ NEW: Lấy vị trí ngay khi khởi động App
   useEffect(() => {
@@ -199,21 +201,45 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    if (currentUser?.id) {
-      const fetchCart = async () => {
-        try {
-          const items = await CartService.getCart(currentUser.id);
-          setCartItems(items);
-        } catch (error) {
-          console.error("Failed to load cart:", error);
-        }
-      };
-      fetchCart();
-    } else {
-      setCartItems([]);
-    }
-  }, [currentUser]);
+  // useEffect(() => {
+  //   if (currentUser?.id) {
+  //     const fetchCart = async () => {
+  //       try {
+  //         const items = await CartService.getCart(currentUser.id);
+  //         setCartItems(items);
+  //       } catch (error) {
+  //         console.error("Failed to load cart:", error);
+  //       }
+  //     };
+  //     fetchCart();
+  //   } else {
+  //     setCartItems([]);
+  //   }
+  // }, [currentUser]);
+
+  const handleLogout = () => {
+    console.log("👋 [DEBUG] Đang thực hiện đăng xuất và dọn dẹp...");
+
+    // 1. Xóa sạch State người dùng và điểm thưởng
+    setCurrentUser(null);
+    setUserPoints({ teaLeaves: 0, vouchers: 0 });
+
+    // 2. QUÉT SẠCH GIỎ HÀNG (Diệt tận gốc lỗi không reset)
+    setCartItems([]);
+    setAppliedVoucher(null);
+    setDiscount(0);
+
+    // 3. Xóa mọi dấu vết trong LocalStorage (Application tab)
+    localStorage.removeItem("user");
+    localStorage.removeItem("my_cart_items");
+    localStorage.removeItem("selectedStore"); // Để khách sau vào chọn lại chi nhánh cho chuẩn
+
+    // 4. Đưa người dùng về trang chủ
+    setCurrentPage('home');
+    
+    // ✅ Cách mạnh tay nhất để đảm bảo không còn "bóng ma" nào sót lại:
+    window.location.reload(); 
+  };
 
   // --- 3. CÁC HÀM XỬ LÝ GIỎ HÀNG ---
   const addToCart = async (item: CartItem) => {
@@ -258,107 +284,103 @@ function App() {
   };
 
 const handleConfirmOrder = async (orderData: OrderData) => {
-  // 1. Kiểm tra điều kiện tiên quyết
-  if (cartItems.length === 0 || !selectedStore || !currentUser) return;
+  if (cartItems.length === 0 || !selectedStore || !currentUser) {
+    alert("Vui lòng kiểm tra lại giỏ hàng hoặc chi nhánh!");
+    return;
+  }
 
-  // 2. Tính toán tiền nong
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const finalTotal = subtotal - (discount || 0);
+  const currentSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const calculatedPrice = currentSubtotal - (discount || 0);
 
-  // 3. 📦 ĐÓNG GÓI DỮ LIỆU - PHẢI KHỚP TÊN VỚI BACKEND
   const orderPayload = {
-    // Đổi user_id -> buyerusername để khớp với OrderController
-    buyerusername: currentUser.username || currentUser.id, 
-    
-    // Đổi total_price -> originalprice để khớp với Java Entity
-    originalprice: finalTotal, 
-    
-    // Đổi phone -> phonenumber
+    buyerusername: currentUser.username, 
+    originalprice: calculatedPrice,
     phonenumber: orderData.customerPhone,
-    
-    // Gửi mã voucher để Trigger SQL tự xử lý (Java không xóa nữa)
     vouchercode: appliedVoucher?.vouchercode || null, 
-    
     address: selectedStore.address,
-    branchid: selectedStore.id, // Đảm bảo có branchid cho Backend
-    note: orderData.note,
-    
-    // Đổi payment_method -> paymentmethod (bỏ dấu gạch dưới)
+    branchid: selectedStore.id,
     paymentmethod: orderData.paymentMethod, 
-    
+    note: orderData.note,
     items: cartItems.map(item => ({
-      productid: item.product.id, // Đổi product_id -> productid
+      productid: item.product.id,
       quantity: item.quantity,
       price: item.price,
-      note: `${item.size} | ${item.sugar} | ${item.ice}`
+      sizelevel: item.sizelevel,
+      sugarlevel: item.sugarlevel,
+      icelevel: item.icelevel
     }))
   };
 
-  // 🔍 DEBUG: In payload ra console trước khi gửi để ông soi
-  console.log("🚀 [DEBUG] Payload gửi lên Backend:", JSON.stringify(orderPayload, null, 2));
+const clearCartCompletely = () => {
+  console.log("🧹 [DEBUG] Bắt đầu chiến dịch quét sạch giỏ hàng...");
 
-  try {
-    // 4. Gọi API tạo đơn hàng
+  // 1. Xóa bằng cách ép mảng về rỗng (Cách React nhất)
+  setCartItems([]); 
+
+  // 2. Xóa thủ công trong LocalStorage (Thử cả 2 tên key phổ biến)
+  localStorage.removeItem('cart');
+  localStorage.removeItem('cartItems');
+  localStorage.removeItem('selectedStore'); // Xóa luôn store nếu ông muốn reset từ đầu
+
+  // 3. Reset các biến tính toán liên quan
+  setAppliedVoucher(null);
+  setDiscount(0);
+  
+  console.log("✅ Giỏ hàng FE đã trống trơn!");
+};
+
+ try {
     const response = await fetch('http://localhost:8080/api/orders/create', {
       method: 'POST',
-      headers: {
+      headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${currentUser.token}`
+        'Authorization': `Bearer ${currentUser.token}` 
       },
       body: JSON.stringify(orderPayload)
     });
 
+    const savedOrder = await response.json(); 
+
     if (response.ok) {
-      const text = await response.text();
-      console.log("✅ [DEBUG] Server trả về:", text);
+      // 1. Lưu thông tin đơn hàng để hiện modal
+      setPendingOrder({
+        id: savedOrder.orderid,
+        totalPrice: savedOrder.originalprice,
+        customerName: orderData.customerName,
+        customerPhone: orderData.customerPhone,
+        paymentMethod: orderData.paymentMethod,
+        note: savedOrder.note || orderData.note, 
+        items: [...cartItems],
+        store: selectedStore!,
+        status: "pending", 
+        orderTime: new Date() 
+      });
+
+      // 2. ✅ RESET GIỎ HÀNG THẬT SỰ (CẢ FE VÀ DB)
+      setCartItems([]); // Xóa trên giao diện
+      localStorage.removeItem('my_cart_items');
       
-      let savedOrder;
+      // 🚩 ÔNG PHẢI MỞ ĐOẠN NÀY RA VÀ VIẾT HÀM XÓA TRÊN SERVER
+      // Nếu không xóa trên Database, giỏ hàng sẽ bị "hồi sinh" ở đơn sau!
       try {
-        savedOrder = JSON.parse(text);
-      } catch {
-        // Tự tạo object để hiển thị nếu backend trả về chuỗi text đơn giản
-        savedOrder = {
-          id: `ORD_${Date.now()}`,
-          items: [...cartItems],
-          store: selectedStore,
-          status: 'pending',
-          totalPrice: finalTotal,
-          customerName: orderData.customerName,
-          customerPhone: orderData.customerPhone,
-          paymentMethod: orderData.paymentMethod,
-          appliedVoucher: appliedVoucher,
-          orderTime: new Date()
-        };
+          // Ví dụ: await CartService.clearCart(currentUser.id); 
+          console.log("🛒 Đã quét sạch giỏ hàng trên Database");
+      } catch (e) {
+          console.error("Không xóa được giỏ hàng DB, nhưng vẫn cho đặt hàng");
       }
 
-      // 5. Dọn dẹp State
-      setCartItems([]); 
-      CartService.clearCart(); 
-      setAppliedVoucher(null);
-      setDiscount(0);
-      
-      // 6. Chuyển màn hình
-      if (savedOrder) {
-        setOrders(prev => [savedOrder, ...prev]);
-        setPendingOrder(savedOrder);
-        setShowCheckout(false);
-        setShowOrderConfirmation(true);
-      }
+      // 3. ĐÓNG CÁC TRANG CŨ VÀ HIỆN XÁC NHẬN
+      setShowCheckout(false); 
+      setShowCart(false); 
+      setShowOrderConfirmation(true); 
+
     } else {
-      // 🔍 DEBUG: Lấy nội dung lỗi cụ thể từ Backend
-      const errorMsg = await response.text();
-      console.error("❌ [LỖI SERVER 500]:", errorMsg);
-      alert(`Đặt hàng thất bại: ${errorMsg || "Lỗi hệ thống!"}`);
+      alert("Lỗi: " + (savedOrder.message || "Không thể tạo đơn hàng"));
     }
   } catch (error) {
-    console.error("🌐 [LỖI KẾT NỐI]:", error);
-    alert("Không thể kết nối đến server!");
+    console.error("❌ Lỗi crash code:", error);
   }
 };
-  // --- Sửa lại phần State trong App.tsx ---
-  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
-  const [discount, setDiscount] = useState(0);
-
   // Hàm tính toán chiết khấu dùng chung
   const calculateDiscount = (voucher: Voucher | null, currentSubtotal: number) => {
     if (!voucher) return 0;
@@ -382,7 +404,7 @@ const handleConfirmOrder = async (orderData: OrderData) => {
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   // Tính Tổng cộng cuối cùng
-  const total = subtotal - discount;
+  // const total = subtotal - discount;
 
   // // Hàm xử lý khi người dùng chọn/hủy mã giảm giá
   // const handleApplyVoucher = (voucher: any | null) => {
@@ -444,6 +466,7 @@ const handleConfirmOrder = async (orderData: OrderData) => {
             orders={orders}
             currentUser={currentUser}
             onOpenLogin={() => {}} 
+            onLogout={handleLogout} // ✅ Truyền hàm vào đây
           />
         );
       default:
@@ -577,22 +600,30 @@ const handleConfirmOrder = async (orderData: OrderData) => {
       {showOrderConfirmation && pendingOrder && (
         <OrderConfirmation
           orderId={pendingOrder.id}
+          note={pendingOrder.note || ''}
           orderData={{
-            customerName: pendingOrder.customerName || '',
-            customerPhone: pendingOrder.customerPhone || '',
+            customerName: pendingOrder.customerName || 'Khách hàng',
+            customerPhone: pendingOrder.customerPhone || 'N/A',
             paymentMethod: (pendingOrder.paymentMethod as any) || 'COD',
-            note: ''
+            note: pendingOrder.note||''
           }}
           selectedStore={selectedStore}
           total={pendingOrder.totalPrice}
-          appliedVoucher={appliedVoucher} // ✅ Đồng bộ biến appliedVoucher
-          onPayNow={() => alert('Chức năng đang phát triển')}
+          appliedVoucher={appliedVoucher}
+          onPayNow={() => alert('Đang chuyển tới trang thanh toán...')}
           onBackToHome={() => { 
+            console.log("🚩 [DEBUG] Reset kho FE");
+            
+            // Reset mọi thứ về số 0
+            setCartItems([]); 
+            localStorage.removeItem('my_cart_items');
+            
             setShowOrderConfirmation(false); 
-            setAppliedVoucher(null); // Reset voucher sau khi xong
-            setDiscount(0);
+            setPendingOrder(null);
             setCurrentPage('home'); 
-          }}
+          
+    // window.location.reload(); // Không cần dòng này nếu state đã reset đúng
+}}
         />
       )}
       {cartItems.length > 0 && !showCart && !showCheckout && (

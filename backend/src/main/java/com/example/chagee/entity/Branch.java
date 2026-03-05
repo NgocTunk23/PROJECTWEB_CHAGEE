@@ -1,5 +1,7 @@
 package com.example.chagee.entity;
 
+// import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -15,8 +17,6 @@ public class Branch {
     @Column(name = "branch_name", columnDefinition = "NVARCHAR(255)")
     private String branchName;
 
-    // 3. Địa chỉ: addressU (NVARCHAR)
-    // Lưu ý: Tên cột trong SQL là addressU, nên name="addressU"
     @Column(name = "addressU", columnDefinition = "NVARCHAR(255)", nullable = false)
     private String address;
 

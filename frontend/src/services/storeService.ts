@@ -3,7 +3,7 @@ import apiClient from "./apiClient";
 // Interface trả về từ Java (Khớp với Branch.java)
 export interface BranchAPI {
   branchid: string;
-  addressU: string;
+  address: string;
   // managerusername?: any; // Không cần thiết hiển thị
 }
 

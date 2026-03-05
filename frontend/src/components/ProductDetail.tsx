@@ -49,10 +49,10 @@ export function ProductDetail({ product, store, onClose, onAddToCart }: ProductD
       price: calculateTotal() / quantity, // Giá đơn vị (đã cộng size)
       
       product,
-      size,
-      sugar,
-      ice,
-      toppings: [], // ✅ Luôn truyền mảng rỗng
+      // ✅ Gán rõ ràng: Tên_Thuộc_Tính: Giá_Trị_State
+      sizelevel: size,   // Sửa lỗi 18004 (No value exists in scope)
+      sugarlevel: sugar,
+      icelevel: ice,
       quantity,
       store
     };
@@ -162,7 +162,7 @@ export function ProductDetail({ product, store, onClose, onAddToCart }: ProductD
         {/* ❌ ĐÃ ẨN GIAO DIỆN CHỌN TOPPING */}
 
         {/* Note */}
-        <div>
+        {/* <div>
           <h3 className="mb-3 text-sm">Ghi chú (tùy chọn)</h3>
           <textarea
             value={note}
@@ -171,7 +171,7 @@ export function ProductDetail({ product, store, onClose, onAddToCart }: ProductD
             className="w-full p-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-red-600 resize-none"
             rows={3}
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Footer */}

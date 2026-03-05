@@ -5,21 +5,23 @@ import java.math.BigDecimal;
 
 public class OrderRequest {
     
-    private String buyerusername;  // Tên đăng nhập người mua
-    private BigDecimal originalprice; // Tổng tiền cuối cùng
-    private String paymentmethod;   // Phương thức thanh toán (COD, VNPay...)
-    private String branchid;        // ID chi nhánh
-    private String phonenumber;     // Số điện thoại nhận hàng
-    private String address;         // Địa chỉ cửa hàng/nhận hàng
-    private String vouchercode;     // Mã giảm giá đã áp dụng
-    private List<OrderItemRequest> items; // Danh sách món ăn
+    private String buyerusername;
+    private BigDecimal originalprice;
+    private String paymentmethod;
+    private String branchid;
+    private String phonenumber;
+    private String address;
+    private String vouchercode;
+    
+    // ✅ THÊM: Ghi chú tổng của đơn hàng (Khớp với getNote() ở Controller)
+    private String note; 
+
+    private List<OrderItemRequest> items;
 
     public OrderRequest() {
     }
 
-    // ==========================================
-    // GETTERS & SETTERS (Đồng bộ với Controller)
-    // ==========================================
+    // --- Getters & Setters cho OrderRequest ---
     public String getBuyerusername() { return buyerusername; }
     public void setBuyerusername(String buyerusername) { this.buyerusername = buyerusername; }
 
@@ -41,6 +43,9 @@ public class OrderRequest {
     public String getVouchercode() { return vouchercode; }
     public void setVouchercode(String vouchercode) { this.vouchercode = vouchercode; }
 
+    public String getNote() { return note; } // ✅ Fix lỗi Undefined getNote()
+    public void setNote(String note) { this.note = note; }
+
     public List<OrderItemRequest> getItems() { return items; }
     public void setItems(List<OrderItemRequest> items) { this.items = items; }
 
@@ -52,11 +57,16 @@ public class OrderRequest {
         private String productid; 
         private Integer quantity;
         private BigDecimal price;
-        private String note; // Lưu thông tin Size, Đường, Đá
+        
+        // ✅ THÊM 3 TRƯỜNG MỚI: Tách riêng thay vì để trong note
+        private String sizelevel;
+        private String sugarlevel;
+        private String icelevel;
 
         public OrderItemRequest() {
         }
 
+        // --- Getters & Setters cho OrderItemRequest ---
         public String getProductid() { return productid; }
         public void setProductid(String productid) { this.productid = productid; }
 
@@ -66,7 +76,13 @@ public class OrderRequest {
         public BigDecimal getPrice() { return price; }
         public void setPrice(BigDecimal price) { this.price = price; }
 
-        public String getNote() { return note; }
-        public void setNote(String note) { this.note = note; }
+        public String getSizelevel() { return sizelevel; } // ✅ Fix lỗi getSizelevel()
+        public void setSizelevel(String sizelevel) { this.sizelevel = sizelevel; }
+
+        public String getSugarlevel() { return sugarlevel; } // ✅ Fix lỗi getSugarlevel()
+        public void setSugarlevel(String sugarlevel) { this.sugarlevel = sugarlevel; }
+
+        public String getIcelevel() { return icelevel; } // ✅ Fix lỗi getIcelevel()
+        public void setIcelevel(String icelevel) { this.icelevel = icelevel; }
     }
 }

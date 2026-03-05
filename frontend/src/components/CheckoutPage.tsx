@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { CartItem, Store } from '../App';
 import { 
   ChevronLeft, MapPin, User, CreditCard, Wallet, 
-  Tag, Ticket, X, ChevronRight, Info, CheckCircle 
+  Tag, Ticket, X, ChevronRight, Info, CheckCircle, NotebookPen // ✅ Thêm ông thần này vào
 } from 'lucide-react';
 import { VoucherService } from '../services/voucherService';
 import { Check} from 'lucide-react';
@@ -33,8 +33,8 @@ interface CheckoutPageProps {
 export interface OrderData {
   customerName: string;
   customerPhone: string;
-  paymentMethod: 'COD' | 'VNPay' | 'MoMo' | 'ZaloPay';
-  note?: string;
+  paymentMethod: 'Tiền Mặt' | 'Ngân hàng' | 'MoMo';
+  note: string;
 }
 
 export function CheckoutPage({
@@ -57,7 +57,7 @@ export function CheckoutPage({
     customerName: currentUser?.fullname || currentUser?.username || '', 
     // Quét toàn bộ các key phone có thể có từ Backend
     customerPhone: currentUser?.phone || currentUser?.phonenumber || currentUser?.phoneNumber || currentUser?.phone_number || '', 
-    paymentMethod: 'COD',
+    paymentMethod: 'Tiền Mặt',
     note: ''
   });
 
@@ -121,10 +121,9 @@ export function CheckoutPage({
   };
 
   const paymentMethods = [
-    { id: 'COD', name: 'Tiền mặt', icon: Wallet, color: 'text-green-600' },
-    { id: 'VNPay', name: 'VNPay', icon: CreditCard, color: 'text-blue-600' },
+    { id: 'Tiền Mặt', name: 'Tiền Mặt', icon: Wallet, color: 'text-green-600' },
+    { id: 'Ngân Hàng', name: 'Ngân Hàng', icon: CreditCard, color: 'text-blue-600' },
     { id: 'MoMo', name: 'MoMo', icon: Wallet, color: 'text-pink-600' },
-    { id: 'ZaloPay', name: 'ZaloPay', icon: Wallet, color: 'text-blue-500' }
   ];
 
   return (
@@ -181,6 +180,26 @@ export function CheckoutPage({
             </div>
           </div>
 
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            {/* Tiêu đề có Icon và đường kẻ ngang cho đẹp */}
+            <h3 className="mb-4 flex items-center gap-2 font-bold text-gray-800 border-b pb-2">
+              <NotebookPen size={20} className="text-blue-600" /> Ghi chú cho đơn hàng
+            </h3>
+            <textarea
+              // 1. "Soi" dữ liệu: Hiển thị đúng những gì đang có trong formData.note
+              value={formData.note} 
+              
+              // 2. "Bắt" dữ liệu: Ông gõ tới đâu, nó cập nhật vào túi formData tới đó
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({ ...formData, note: value });
+              }}
+              placeholder="Thêm ghi chú cho đơn hàng..."
+              className="w-full p-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-red-600 resize-none text-sm"
+              rows={3}
+            />
+          </div>
+
           {/* ✅ MỤC HIỂN THỊ VOUCHER PHONG CÁCH MODAL (ĐÃ CẬP NHẬT) */}
           <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm space-y-4">
             {/* Header của mục Voucher */}
@@ -230,7 +249,7 @@ export function CheckoutPage({
             ) : (
               /* Trạng thái chưa chọn mã */
               <div className="py-4 px-2 border-2 border-dashed border-gray-100 rounded-2xl text-center">
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Chưa áp dụng mã giảm giá</p>
+                <p className="text-l text-gray-400 font-bold uppercase tracking-widest">Chưa áp dụng mã giảm giá</p>
               </div>
             )}
           </div>
@@ -332,7 +351,7 @@ export function CheckoutPage({
       
       {/* THÂN MODAL - NƠI XỬ LÝ SCROLL ĐỘC LẬP */}
       <div className="p-6 space-y-4 overflow-y-auto flex-1 touch-pan-y bg-gray-50/30 scrollbar-hide">
-        {applicableVouchers.length === 0 ? (
+        {vouchers.length === 0 ? (
           <div className="text-center py-20 text-gray-400 italic">Không có mã nào đủ điều kiện</div>
         ) : (
           <>

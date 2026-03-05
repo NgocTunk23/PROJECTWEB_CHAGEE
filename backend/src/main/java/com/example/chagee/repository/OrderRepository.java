@@ -23,3 +23,4 @@ public interface OrderRepository extends JpaRepository<Order, String> {
            "ORDER BY o.ordertime DESC")
     List<Order> findAllByBuyerusernameWithDetails(@Param("username") String username);
 }
+

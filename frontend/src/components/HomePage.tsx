@@ -215,7 +215,6 @@ useEffect(() => {
             </div>
           </div>
         </div>
-
         {/* Order Type Selection */}
         <div className="grid md:grid-cols-2 gap-4">
           <button
@@ -237,7 +236,6 @@ useEffect(() => {
             </span>
           </div>
         </div>
-
         {/* ✅ ĐÃ SỬA: Section Voucher cho người dùng mới */}
         <div className="border-t border-gray-100 pt-6">
           <div className="flex items-center justify-between mb-4">
@@ -249,12 +247,20 @@ useEffect(() => {
               DÙNG NGAY
             </button>
           </div>
-
           {isLoadingVouchers ? (
             <div className="flex gap-4 overflow-x-auto">
                <div className="w-full h-32 bg-gray-100 animate-pulse rounded-xl"></div>
             </div>
-          ) : (
+          ) :  vouchers.length === 0 ? (
+            /* ✅ TRƯỜNG HỢP 1: KHÔNG CÓ VOUCHER NÀO */
+            <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center">
+              <div className="text-4xl mb-3">🎫</div>
+              <p className="text-gray-500 font-bold uppercase text-m tracking-widest">
+                Hiện tại bạn chưa có Voucher nào
+              </p>
+            </div>
+          ) :
+          (
             <div className="grid md:grid-cols-2 gap-4">
               {vouchers.map((v) => (
                 <div key={v.vouchercode} className="bg-[#FFF9F2] rounded-xl p-6 border-l-4 border-orange-400 shadow-sm relative overflow-hidden">
@@ -272,8 +278,11 @@ useEffect(() => {
                     </div>
                   ) : (
                     /* Nếu không có giảm giá (Mua 2 Tặng 1), để một khoảng trống hoặc badge "Hot" */
-                    <div className="h-8"></div> 
+                    <div className="text-[11px] font-black text-white bg-red-600 w-fit px-2 py-1 rounded-md uppercase animate-pulse">
+                      HOT 🔥
+                    </div>
                   )}
+
 
                   <div className="text-[10px] text-gray-400 mt-2">
                     Hạn dùng: {v.expirydate ? new Date(v.expirydate).toLocaleDateString('vi-VN') : 'Vô thời hạn'}
@@ -287,15 +296,6 @@ useEffect(() => {
             </div>
           )}
         </div>
-
-        {/* Promotional Banner */}
-        {/* <div className="rounded-2xl overflow-hidden shadow-lg">
-          <img
-            src="https://via.placeholder.com/600x400"
-            alt="Trà Sữa Oolong Đào"
-            className="w-full h-auto"
-          />
-        </div> */}
 
         {/* Feature Cards - Desktop/Tablet */}
         <div className="hidden md:grid md:grid-cols-2 gap-4">

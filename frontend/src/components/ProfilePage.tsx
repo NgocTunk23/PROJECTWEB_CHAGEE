@@ -7,9 +7,10 @@ interface ProfilePageProps {
   orders: Order[];
   onOpenLogin?: () => void;
   currentUser?: any;
+  onLogout: () => void; // ✅ Thêm prop này để xử lý đăng xuất
 }
 
-export function ProfilePage({ userPoints, orders, onOpenLogin, currentUser }: ProfilePageProps) {
+export function ProfilePage({ userPoints, orders, onOpenLogin, currentUser, onLogout }: ProfilePageProps) {
   const [vouchers, setVouchers] = useState<any[]>([]); // ✅ State lưu danh sách voucher
   const recentOrders = orders.slice(0, 3);
 
@@ -264,14 +265,24 @@ export function ProfilePage({ userPoints, orders, onOpenLogin, currentUser }: Pr
             <ChevronRight size={20} className="text-gray-400" />
           </button>
           <div className="h-px bg-gray-100 mx-4"></div>
-          <button className="w-full flex items-center justify-between p-4 hover:bg-red-50 rounded-lg transition-colors group">
+          <button 
+            onClick={onLogout} // ✅ Đưa lệnh Đăng xuất lên đây
+            className="w-full flex items-center justify-between p-4 hover:bg-red-50 rounded-xl transition-all group active:scale-[0.98]"
+          >
             <div className="flex items-center gap-4">
+              {/* Icon cũng sẽ trigger logout khi bấm vào */}
               <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
                 <LogOut size={20} className="text-red-600" />
               </div>
-              <span className="font-medium text-red-600">Đăng xuất</span>
+              
+              {/* Chữ Đăng xuất giờ chỉ là hiển thị, không cần onClick riêng nữa */}
+              <span className="font-bold text-red-600">
+                Đăng xuất
+              </span>
             </div>
-            <ChevronRight size={20} className="text-red-400" />
+
+            {/* Cái mũi tên bên phải cũng thuộc vùng click luôn */}
+            <ChevronRight size={20} className="text-red-400 group-hover:text-red-600 transition-colors" />
           </button>
         </div>
 

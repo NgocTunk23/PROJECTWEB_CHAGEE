@@ -53,6 +53,9 @@ export function OrdersPage({ currentUser, onOrderNow }: OrdersPageProps) {
   address: o.address || "Nhận tại cửa hàng",
   paymentMethod: o.paymentmethod || "Tiền mặt",
 
+  // ✅ THÊM DÒNG NÀY: Lấy ghi chú từ Backend
+  note: o.note || "",
+
   store: {
     // Nếu branchid bị null thì hiện tên mặc định để tránh để trống ô hồng
     name: o.branchid ? `Chi nhánh ${o.branchid}` : "Cửa hàng Chagee Flagship",
@@ -161,7 +164,7 @@ export function OrdersPage({ currentUser, onOrderNow }: OrdersPageProps) {
                <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 text-sm truncate">{item.product.name}</p>
                   <p className="text-xs text-gray-500">
-                     {item.size} • {item.quantity} phần
+                     {item.sizelevel} • {item.quantity} phần
                   </p>
                </div>
             </div>
@@ -266,6 +269,9 @@ export function OrdersPage({ currentUser, onOrderNow }: OrdersPageProps) {
                 <div className="flex justify-between"><span className="text-gray-500">Mã đơn:</span><span className="font-medium text-gray-800">#{selectedOrder.id}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Thời gian:</span><span className="font-medium">{new Date(selectedOrder.orderTime).toLocaleString('vi-VN')}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Phương thức thanh toán:</span><span className="font-medium uppercase text-blue-600">{selectedOrder.paymentMethod}</span></div>
+               <div className="flex justify-between items-start pt-2 border-t border-dashed border-gray-100 mt-2"><span className="text-gray-400 shrink-0">Ghi chú:</span><span className="font-medium text-gray-800 text-right italic">{selectedOrder.note && selectedOrder.note.trim() !== "" ? selectedOrder.note  : "Không có"}
+    </span>
+  </div>
               </div>
 
               {/* Item List */}
@@ -281,7 +287,7 @@ export function OrdersPage({ currentUser, onOrderNow }: OrdersPageProps) {
                     />
                     <div className="flex-1">
                       <p className="font-bold text-gray-800">{item.product.name} <span className="text-red-600 ml-1">x{item.quantity}</span></p>
-                      <p className="text-[11px] text-gray-400 italic">{item.size} | {item.sugar} | {item.ice}</p>
+                      <p className="text-[11px] text-gray-400 italic">{item.sizelevel} | {item.sugarlevel} | {item.icelevel}</p>
                       <div className="flex justify-between items-center mt-1">
                          <span className="text-xs text-gray-400">Giá: {item.price.toLocaleString()}đ</span>
                          <span className="font-semibold text-gray-800">{(item.price * item.quantity).toLocaleString()}đ</span>

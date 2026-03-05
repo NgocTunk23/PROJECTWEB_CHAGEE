@@ -69,7 +69,7 @@ export function CartPage({
         {cartItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 opacity-60">
             <ShoppingBag size={64} className="mb-4" />
-            <p className="text-xl font-bold italic">Chưa có món nào, chọn trà đi Tôn ơi!</p>
+            <p className="text-xl font-bold italic">Chưa có món nào.</p>
           </div>
         ) : (
           <div className="px-4 py-6 space-y-4">
@@ -82,7 +82,7 @@ export function CartPage({
                     <div>
                       <h3 className="font-bold text-gray-800 text-base">{item.name}</h3>
                       <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">
-                        {item.size} | {item.sugar} | {item.ice} 
+                        {item.sizelevel} | {item.sugarlevel} | {item.icelevel} 
                       </p>
                     </div>
                     <button onClick={() => onRemoveItem(item.id)} className="text-gray-300 hover:text-red-500"><Trash2 size={18} /></button>

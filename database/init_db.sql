@@ -1,6 +1,5 @@
 USE master;
 GO
-
 -- Kiểm tra và xóa database nếu đã tồn tại để tránh lỗi "file already exists"
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'chagee_db')
 BEGIN
@@ -9,68 +8,40 @@ BEGIN
     DROP DATABASE chagee_db;
 END
 GO
-
 -- Tạo mới database
 CREATE DATABASE chagee_db;
 GO
-
 USE chagee_db;
 GO
-
--- =============================================
--- XÓA BẢNG CŨ (THEO THỨ TỰ CON TRƯỚC -> CHA SAU)
--- =============================================
--- Nhóm giao dịch & Đơn hàng (Xóa trước vì phụ thuộc nhiều nơi)
-IF OBJECT_ID('Transactions', 'U') IS NOT NULL DROP TABLE Transactions;
+IF OBJECT_ID('UserVouchers', 'U') IS NOT NULL DROP TABLE UserVouchers;
 IF OBJECT_ID('OrderVouchers', 'U') IS NOT NULL DROP TABLE OrderVouchers;
 IF OBJECT_ID('OrderDetails', 'U') IS NOT NULL DROP TABLE OrderDetails;
 IF OBJECT_ID('Orders', 'U') IS NOT NULL DROP TABLE Orders;
-
--- Nhóm Voucher & Sản phẩm
-IF OBJECT_ID('VoucherAppliedItems', 'U') IS NOT NULL DROP TABLE VoucherAppliedItems;
 IF OBJECT_ID('Vouchers', 'U') IS NOT NULL DROP TABLE Vouchers;
 IF OBJECT_ID('Products', 'U') IS NOT NULL DROP TABLE Products;
 IF OBJECT_ID('Branches', 'U') IS NOT NULL DROP TABLE Branches;
-
--- Nhóm Người dùng & Tài khoản
-IF OBJECT_ID('AccountBans', 'U') IS NOT NULL DROP TABLE AccountBans;
-IF OBJECT_ID('SocialAccounts', 'U') IS NOT NULL DROP TABLE SocialAccounts;
-IF OBJECT_ID('BuyerBankAccounts', 'U') IS NOT NULL DROP TABLE BuyerBankAccounts;
-
--- Cuối cùng mới xóa 2 bảng gốc (Cha)
 IF OBJECT_ID('Buyers', 'U') IS NOT NULL DROP TABLE Buyers;
 IF OBJECT_ID('Admins', 'U') IS NOT NULL DROP TABLE Admins;
-GO
 
+GO
 -- =============================================
 -- 1. BẢNG QUẢN TRỊ VIÊN
 -- =============================================
 IF OBJECT_ID('Admins', 'U') IS NOT NULL DROP TABLE Admins;
 CREATE TABLE Admins (
-    username VARCHAR(255) PRIMARY KEY,--
-
-    passwordU VARCHAR(255) NOT NULL,--
-
-    email VARCHAR(100) UNIQUE,--
-
-    fullname NVARCHAR(100),--
-
-    phonenumber VARCHAR(20),--
-
-    createdat DATETIME DEFAULT GETDATE(),--
-
+    username VARCHAR(255) PRIMARY KEY,
+    passwordU VARCHAR(255) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    fullname NVARCHAR(100),
+    phonenumber VARCHAR(20),
+    createdat DATETIME DEFAULT GETDATE(),
     dob DATE,
-
     avatarlink VARCHAR(MAX),
-
     gender NVARCHAR(10),
-
     permissionlevel INT DEFAULT 1, -- Cấp độ quyền (VD: 1= QUẢN LÝ CHI NHÁNH, 10= CHỦ SỞ HỮU)--
-
-    lastlogin DATETIME--
+    lastlogin DATETIME
 );
 GO
-
 -- =============================================
 -- 2. BẢNG NGƯỜI MUA
 -- =============================================
@@ -91,49 +62,8 @@ CREATE TABLE Buyers (
     membershiptier NVARCHAR(255) DEFAULT 'Member' -- Hạng thành viên
 );
 GO
-
 -- =============================================
--- 3. CÁC BẢNG LIÊN KẾT CỦA NGƯỜI MUA
--- =============================================
-
--- Liên kết MXH (Chỉ dành cho Buyer)
-IF OBJECT_ID('SocialAccounts', 'U') IS NOT NULL DROP TABLE SocialAccounts;
-CREATE TABLE SocialAccounts (
-    buyerusername VARCHAR(255),
-    providername VARCHAR(20), -- 'GOOGLE', 'APPLE'
-    providerid VARCHAR(255) UNIQUE,
-    PRIMARY KEY (buyerusername, providername, providerid),
-    FOREIGN KEY (buyerusername) REFERENCES Buyers(username) ON DELETE CASCADE
-);
-GO
-
--- Tài khoản ngân hàng (Chỉ dành cho Buyer)
-IF OBJECT_ID('BuyerBankAccounts', 'U') IS NOT NULL DROP TABLE BuyerBankAccounts;
-CREATE TABLE BuyerBankAccounts (
-    buyerusername VARCHAR(255),
-    bankname NVARCHAR(255),
-    accountnumber VARCHAR(255),
-    cardtype NVARCHAR(255),
-    PRIMARY KEY (buyerusername, bankname, accountnumber),
-    FOREIGN KEY (buyerusername) REFERENCES Buyers(username) ON DELETE CASCADE
-);
-GO
-
--- Lịch sử Khóa tài khoản (Admin khóa Buyer)
-IF OBJECT_ID('AccountBans', 'U') IS NOT NULL DROP TABLE AccountBans;
-CREATE TABLE AccountBans (
-    adminusername VARCHAR(255), -- Khóa ngoại trỏ về Admins
-    buyerusername VARCHAR(255), -- Khóa ngoại trỏ về Buyers
-    bantime DATETIME DEFAULT GETDATE(),
-    reason NVARCHAR(255),
-    PRIMARY KEY (adminusername, buyerusername),
-    FOREIGN KEY (adminusername) REFERENCES Admins(username),
-    FOREIGN KEY (buyerusername) REFERENCES Buyers(username)
-);
-GO
-
--- =============================================
--- 4. BẢNG SẢN PHẨM VÀ CHI NHÁNH
+-- 3. BẢNG SẢN PHẨM VÀ CHI NHÁNH
 -- =============================================
 IF OBJECT_ID('Branches', 'U') IS NOT NULL DROP TABLE Branches;
 CREATE TABLE Branches (
@@ -148,7 +78,6 @@ CREATE TABLE Branches (
     FOREIGN KEY (managerusername) REFERENCES Admins(username)
 );
 GO
-
 IF OBJECT_ID('Products', 'U') IS NOT NULL DROP TABLE Products;
 CREATE TABLE Products (
     productid VARCHAR(255) PRIMARY KEY,
@@ -162,9 +91,8 @@ CREATE TABLE Products (
     FOREIGN KEY (approvedby) REFERENCES Admins(username)
 );
 GO
-
 -- =============================================
--- 5. KHUYẾN MÃI (VOUCHER)
+-- 4. KHUYẾN MÃI (VOUCHER)
 -- =============================================
 IF OBJECT_ID('Vouchers', 'U') IS NOT NULL DROP TABLE Vouchers;
 CREATE TABLE Vouchers (
@@ -181,7 +109,7 @@ CREATE TABLE Vouchers (
 GO
 
 -- =============================================
--- 6. ĐƠN HÀNG VÀ GIAO DỊCH
+-- 5. ĐƠN HÀNG VÀ GIAO DỊCH
 -- =============================================
 IF OBJECT_ID('Orders', 'U') IS NOT NULL DROP TABLE Orders;
 CREATE TABLE Orders (
@@ -202,11 +130,17 @@ CREATE TABLE Orders (
 
     vouchercode VARCHAR(50), -- ⚠️ PHẢI CÓ DÒNG NÀY NÈ ÔNG TÔN!
 
+    -- ⚠️ THÊM LẠI 2 DÒNG NÀY ÔNG TÔN ƠI!
+    phonenumber VARCHAR(20),
+    addressU NVARCHAR(MAX),
+
+    note NVARCHAR(MAX),   -- (Tùy chọn: Thêm ghi chú)
+
+
     FOREIGN KEY (buyerusername) REFERENCES Buyers(username), -- Chỉ liên kết với Buyers
     FOREIGN KEY (branchid) REFERENCES Branches(branchid)
 );
 GO
-
 IF OBJECT_ID('OrderVouchers', 'U') IS NOT NULL DROP TABLE OrderVouchers;
 CREATE TABLE OrderVouchers (
     orderid VARCHAR(255),
@@ -216,46 +150,8 @@ CREATE TABLE OrderVouchers (
     FOREIGN KEY (vouchercode) REFERENCES Vouchers(vouchercode)
 );
 GO
-IF OBJECT_ID('Transactions', 'U') IS NOT NULL DROP TABLE Transactions;
-CREATE TABLE Transactions (
-    transactionid VARCHAR(255),
-    orderid VARCHAR(255),
-    buyerusername VARCHAR(255), -- Người thực hiện giao dịch là Buyer
-    amount DECIMAL(18, 2),
-    transactiontime DATETIME DEFAULT GETDATE(),
-    paymentgateway NVARCHAR(255),
-    bankname NVARCHAR(255),
-
-    PRIMARY KEY (transactionid, orderid, buyerusername),
-    FOREIGN KEY (orderid) REFERENCES Orders(orderid),
-    FOREIGN KEY (buyerusername) REFERENCES Buyers(username)
-);
-GO
-
-USE chagee_db;
-GO
-
 -- =============================================
--- 7. BẢNG MẶT HÀNG ÁP DỤNG MÃ
--- =============================================
--- Bảng này cho phép 1 voucher áp dụng cho nhiều món/danh mục cụ thể
-IF OBJECT_ID('VoucherAppliedItems', 'U') IS NOT NULL DROP TABLE VoucherAppliedItems;
-
-CREATE TABLE VoucherAppliedItems (
-    vouchercode VARCHAR(255),
-    applicableobject NVARCHAR(255), -- Tên món hoặc danh mục được áp dụng (VD: 'Trà sữa', 'Size L')
-    
-    PRIMARY KEY (vouchercode, applicableobject), -- Khóa chính phức hợp để tránh trùng lặp
-    FOREIGN KEY (vouchercode) REFERENCES Vouchers(vouchercode) ON DELETE CASCADE
-);
-GO
-
--- =============================================
--- 8. BẢNG CHI TIẾT ĐƠN HÀNG - "CHỨA"
--- =============================================
--- Bảng này liên kết Mã đơn hàng và Mã SP
--- =============================================
--- 8. BẢNG CHI TIẾT ĐƠN HÀNG (ĐÃ SỬA: THÊM CỘT ID)
+-- 6. BẢNG CHI TIẾT ĐƠN HÀNG (ĐÃ SỬA: THÊM CỘT ID)
 -- =============================================
 IF OBJECT_ID('OrderDetails', 'U') IS NOT NULL DROP TABLE OrderDetails;
 
@@ -269,21 +165,23 @@ CREATE TABLE OrderDetails (
     quantity INT DEFAULT 1,
     
     price DECIMAL(18, 2), -- (Tùy chọn: Thêm để lưu giá lúc mua)
-    note NVARCHAR(MAX),   -- (Tùy chọn: Thêm ghi chú)
+
+    sizelevel NVARCHAR(50), -- (Tùy chọn: Kích thước sản phẩm, nếu có)
+
+    sugarlevel NVARCHAR(50), -- (Tùy chọn: Độ ngọt, nếu có)
+
+    icelevel NVARCHAR(50), -- (Tùy chọn: Độ đá, nếu có)
     
     -- Khóa ngoại
     FOREIGN KEY (orderid) REFERENCES Orders(orderid) ON DELETE CASCADE,
     FOREIGN KEY (productid) REFERENCES Products(productid)
 );
 GO
-
-
-
 -- =============================================
 -- BỔ SUNG: BẢNG QUẢN LÝ VOUCHER CỦA TỪNG NGƯỜI
 -- =============================================
 -- Xóa bảng cũ và tạo lại với cột usage_left
-IF OBJECT_ID('UserVouchers', 'U') IS NOT NULL DROP TABLE UserVouchers;
+
 
 CREATE TABLE UserVouchers (
     username VARCHAR(255),
@@ -294,9 +192,6 @@ CREATE TABLE UserVouchers (
     FOREIGN KEY (vouchercode) REFERENCES Vouchers(vouchercode)
 );
 GO
-
-
--- ✅ TRIGGER: TỰ ĐỘNG TRỪ LƯỢT KHI CÓ ĐƠN HÀNG MỚI
 GO
 CREATE OR ALTER TRIGGER trg_UpdateUsageLeft
 ON Orders -- ⚠️ Bắt buộc phải là bảng Orders (vì đơn hàng lưu ở đây)
@@ -315,15 +210,11 @@ BEGIN
       AND i.vouchercode IS NOT NULL; -- Chỉ chạy khi đơn hàng thực sự có dùng mã
 END;
 GO
-
-
 -- =============================================
 -- DATA
 -- =============================================
-
 USE chagee_db;
 GO
-
 -- =============================================
 -- 1. ADMIN
 -- =============================================
@@ -333,7 +224,6 @@ INSERT INTO Admins (
 ('manager01', '123456789', 'manager01@chagee.com', '0909000001', N'Nguyễn Ngọc Tôn', 10),
 ('manager02', '123456789', 'manager02@chagee.com', '0909000002', N'Phan Ngọc Quỳnh Trang', 10);
 GO
-
 -- =============================================
 -- 2. BUYERS
 -- =============================================
@@ -343,7 +233,6 @@ INSERT INTO Buyers (
 ('member01', '123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 600, N'Silver', 'images/user_avts/avt_member01.jpeg'),
 ('member02', '123456789', 'member02@gmail.com', '0911000002', N'Trần Nhi', 300, N'Gold', 'images/user_avts/avt_member02.jpeg');
 GO
-
 -- =============================================
 -- 3. CHI NHÁNH (***FIXED***)
 -- =============================================
@@ -390,9 +279,10 @@ INSERT INTO Branches (
 ('CHAGEE_PXL', N'CHAGEE Phan Xích Long',  N'181 Phan Xích Long, Phường Cầu Kiệu, TP. HCM', 10.794200, 106.690100, '08:00', '23:00', 'manager01'),
 
 -- 10. Quận 7
-('CHAGEE_NDC', N'CHAGEE Nguyễn Đức Cảnh', N'59 Nguyễn Đức Cảnh, Phường Tân Hưng, Q.7, TP. HCM', 10.725600, 106.708900, '09:00', '22:00', 'manager01');
-GO
+('CHAGEE_NDC', N'CHAGEE Nguyễn Đức Cảnh', N'59 Nguyễn Đức Cảnh, Phường Tân Hưng, Q.7, TP. HCM', 10.725600, 106.708900, '09:00', '22:00', 'manager01'),
 
+('CHAGEE_DEMO', N'CHAGEE DEMO',  N'181 Phan Xích Long, Phường Cầu Kiệu, TP. HCM', 10.794200, 106.690100, '00:00', '23:59', 'manager01');
+GO
 -- =============================================
 -- 4. SẢN PHẨM
 -- =============================================
@@ -416,7 +306,6 @@ INSERT INTO Products (
 ('P14', N'Trà Sữa Snow Cap Đại Hồng Bào',           'images/products_img/snow_cap_ts_dai_hong_bao.png', 75000, N'Trà Sữa Snow Cap',     N'Trà sữa Snow Cap lớp kem tươi, vị sảng khoái',          'manager01'),
 ('P15', N'Trà Sữa Snow Cap Oolong Quế Hoa',         'images/products_img/snow_cap_ts_olong_que_hoa.png', 76000, N'Trà Sữa Snow Cap',    N'Trà sữa Snow Cap Oolong Quế Hoa, thơm nhẹ, mịn màng',   'manager01');
 GO
-
 -- =============================================
 -- 5. VOUCHER
 -- =============================================
@@ -439,95 +328,12 @@ INSERT INTO Vouchers (
 -- 3. Voucher Mua 2 Tặng 1 (Logic tính toán thường để mức giảm 0 hoặc xử lý ở App)
 ('B2G1FREE', N'Mua 2 Tặng 1 - Member Mới', NULL, NULL, NULL, 80000, '2026-04-01', 'manager01');
 GO
-
--- Chèn lại dữ liệu mẫu
 INSERT INTO UserVouchers (username, vouchercode, usage_left)
 VALUES 
--- Member 01: Mã Oolong còn 3 lần, mã 30k còn 2 lần (đã xài 1), mã B2G1 còn 0 lần (ẩn)
 ('member01', 'DISCOUNT10', 1), 
 ('member01', 'CASH30K', 1),    
 ('member01', 'B2G1FREE', 1),   
-
--- Member 02: Còn nguyên 3 lần cho tất cả các mã
 ('member02', 'CASH30K', 1),
 ('member02', 'DISCOUNT10', 1),
 ('member02', 'B2G1FREE', 0);
 GO
-
-
-
--- -- =============================================
--- -- 6. VOUCHER APPLIED
--- -- =============================================
--- INSERT INTO VoucherAppliedItems (
---     vouchercode, applicableobject
--- ) VALUES
--- ('SALE10',   N'Trà sữa'),
--- ('SALE10',   N'Trà');
--- GO
-
--- -- =============================================
--- -- 7. ĐƠN HÀNG
--- -- =============================================
--- INSERT INTO Orders (
---     order_id, payment_method, original_price,
---     statusU, buyer_username, branch_id
--- ) VALUES
--- ('ORD001', N'COD', 80000, N'Pending', 'member01', 'CHAGEE_LBB'),
--- ('ORD002', N'VNPay', 120000, N'Completed', 'member02', 'CHAGEE_CMT8');
--- GO
-
--- -- =============================================
--- -- 8. CHI TIẾT ĐƠN HÀNG
--- -- =============================================
--- INSERT INTO OrderDetails (
---     order_id, product_id, quantity
--- ) VALUES
--- ('ORD001', 'P01', 1),
--- ('ORD001', 'P03', 1),
--- ('ORD002', 'P02', 2),
--- ('ORD002', 'P04', 1);
--- GO
-
--- -- =============================================
--- -- 9. VOUCHER ÁP DỤNG CHO ĐƠN
--- -- =============================================
--- INSERT INTO OrderVouchers (
---     order_id, voucher_code
--- ) VALUES
--- ('ORD002', 'SALE10');
--- GO
-
--- -- =============================================
--- -- 10. GIAO DỊCH
--- -- =============================================
--- INSERT INTO Transactions (
---     transaction_id, order_id, buyer_username,
---     amount, payment_gateway, bank_name
--- ) VALUES
--- ('TXN001', 'ORD002', 'member02', 108000, N'VNPay', N'Vietcombank');
--- GO
-
--- USE chagee_db;
--- GO
-
--- PRINT N'=== 1. NHÓM NGƯỜI DÙNG & TÀI KHOẢN ===';
--- SELECT * FROM Admins;            --1
--- SELECT * FROM Buyers;            --2
--- SELECT * FROM SocialAccounts;    --3
--- SELECT * FROM BuyerBankAccounts; --4
--- SELECT * FROM AccountBans;       --5
-
--- PRINT N'=== 2. NHÓM CỬA HÀNG & SẢN PHẨM ===';
--- SELECT * FROM Branches;          --6
--- SELECT * FROM Products;          --7
-
--- PRINT N'=== 3. NHÓM KHUYẾN MÃI (VOUCHER) ===';
--- SELECT * FROM Vouchers;            --8
--- SELECT * FROM VoucherAppliedItems; --9
-
--- PRINT N'=== 4. NHÓM ĐƠN HÀNG & GIAO DỊCH ===';
--- SELECT * FROM Orders;        --10
--- SELECT * FROM OrderDetails;  --11
--- SELECT * FROM OrderVouchers; --12
-SELECT * FROM UserVouchers;  --13

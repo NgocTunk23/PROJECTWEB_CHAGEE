@@ -78,8 +78,8 @@ export function Cart({
                     </div>
                     
                     <div className="text-xs text-gray-500 space-y-1 mb-3">
-                      <p><span className="font-medium text-gray-600">Size:</span> {item.size}</p>
-                      <p><span className="font-medium text-gray-600">Đường:</span> {item.sugar} • <span className="font-medium text-gray-600">Đá:</span> {item.ice}</p>
+                      <p><span className="font-medium text-gray-600">Size:</span> {item.sizelevel}</p>
+                      <p><span className="font-medium text-gray-600">Đường:</span> {item.sugarlevel} • <span className="font-medium text-gray-600">Đá:</span> {item.icelevel}</p>
                       
                       {/* ❌ ĐÃ ẨN TOPPING */}
                       {/* {item.toppings && item.toppings.length > 0 && (

@@ -25,21 +25,22 @@ export function StoreSelector({ selectedStore, onSelectStore, onClose, userLocat
     const [cH, cM] = close.split(':').map(Number);
     return current >= (oH * 60 + oM) && current < (cH * 60 + cM);
   };
-
-  useEffect(() => {
+useEffect(() => {
     const initData = async () => {
       setIsLoading(true);
       
       try {
-        // 1. Lấy dữ liệu từ API
+        // 1. Lấy dữ liệu từ API (Chỉ gọi 1 lần duy nhất ở đây)
         const data = await StoreService.getAllStores();
         
-        // 2. Xử lý dữ liệu và tính toán ngay lập tức nhờ userLocation đã có
+        // 🔍 SIÊU DEBUG: Ông mở F12, xem cái bảng này để biết Backend gửi cột gì về
+        console.table(data); 
+
+        // 2. Xử lý dữ liệu
         const processed: Store[] = data.map((b: any) => {
           const storeLat = b.latitude || b.Latitude;
           const storeLng = b.longitude || b.Longitude;
           
-          // Dùng userLocation từ Props, không cần await GPS nữa
           const hasCoords = userLocation && storeLat && storeLng;
           
           const dist = hasCoords 
@@ -48,28 +49,31 @@ export function StoreSelector({ selectedStore, onSelectStore, onClose, userLocat
 
           return {
             id: b.branchid.toString(),
-            name: b.branchName || `CHAGEE ${b.branchid}`,
-            address: b.addressU,
+            name: b.branchName || b.name || `CHAGEE ${b.branchid}`,
+            
+            // ✅ Lấy đúng addressU mà mình vừa ép Java gửi về
+            address: b.addressU || b.address || "Địa chỉ chưa cập nhật",
+            
             distance: dist !== null ? formatDistance(dist) : "Đang xác định...",
-            // ✅ ĐỒNG BỘ TÊN BIẾN VỚI INTERFACE STORE (_sortDistance)
             _sortDistance: dist ?? 999999,
             isOpen: checkIsOpen(b.openTime, b.closeTime),
             prepTime: '15 Phút'
           };
         });
 
-        // 3. Sắp xếp danh sách
+        // 3. Sắp xếp theo khoảng cách
         const sortedStores = [...processed].sort((a, b) => (a._sortDistance || 0) - (b._sortDistance || 0));
         
         setStores(sortedStores);
       } catch (error) {
-        console.error("Lỗi khi khởi tạo dữ liệu cửa hàng:", error);
+        console.error("❌ Lỗi khởi tạo Store:", error);
       } finally {
         setIsLoading(false);
       }
     };
+
     initData();
-  }, [userLocation]); // ✅ Chạy lại nếu vị trí user cập nhật (lúc mới vào App chưa có, sau 1s có thì cập nhật lại list)
+  }, [userLocation]); // Chạy lại khi có vị trí mới
 
   const filtered = stores.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.address.toLowerCase().includes(searchQuery.toLowerCase()));
 

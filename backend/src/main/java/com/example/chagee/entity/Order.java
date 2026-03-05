@@ -24,7 +24,7 @@ public class Order {
     @Column(name = "phonenumber") 
     private String phonenumber;
 
-    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "addressU", columnDefinition = "NVARCHAR(MAX)")
     private String address;
 
     @Column(name = "vouchercode")
@@ -52,6 +52,10 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<OrderDetail> orderDetails = new ArrayList<>();
+
+
+    @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
+    private String note;
 
     public Order() {
         this.ordertime = new Date();
@@ -85,6 +89,9 @@ public class Order {
     public void setBranchid(String branchid) { this.branchid = branchid; }
     public List<OrderDetail> getOrderDetails() { return orderDetails; }
     public void setOrderDetails(List<OrderDetail> orderDetails) { this.orderDetails = orderDetails; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
     // ========================================================================
     // CLASS CON: ORDER DETAIL (ĐÃ FIX ĐỂ LẤY TÊN SẢN PHẨM)
@@ -121,8 +128,17 @@ public class Order {
         @Column(name = "price")
         private BigDecimal price;
 
-        @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
-        private String note;
+
+
+
+        @Column(name = "sizelevel", length = 50)
+        private String sizelevel;
+
+        @Column(name = "sugarlevel", length = 50)
+        private String sugarlevel;
+
+        @Column(name = "icelevel", length = 50)
+        private String icelevel;
 
         public OrderDetail() {}
 
@@ -142,7 +158,12 @@ public class Order {
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
         public BigDecimal getPrice() { return price; }
         public void setPrice(BigDecimal price) { this.price = price; }
-        public String getNote() { return note; }
-        public void setNote(String note) { this.note = note; }
+
+        public String getSizelevel() { return sizelevel; }
+        public void setSizelevel(String sizelevel) { this.sizelevel = sizelevel; }
+        public String getSugarlevel() { return sugarlevel; }
+        public void setSugarlevel(String sugarlevel) { this.sugarlevel = sugarlevel;}
+        public String getIcelevel() { return icelevel; }
+        public void setIcelevel(String icelevel) { this.icelevel = icelevel;}
     }
 }
