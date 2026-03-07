@@ -131,11 +131,22 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
                   price: product.displayprice,
                   image: product.productimage,
                   category: product.category,
-                  isBestseller: (product.soldquantity || 0) > 100
+                  isBestseller: (product.soldquantity || 0) > 99
                 };
                 
                 return (
-                  <div key={productUI.id} className="flex gap-4 bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md cursor-pointer transition-shadow" onClick={() => onProductClick(productUI)}>
+                  <div 
+                      key={productUI.id} 
+                      /* ✅ CẦN THIẾT: Thêm "relative" để huy chương bám vào góc card */
+                      className="relative flex gap-4 bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md cursor-pointer transition-shadow" 
+                      onClick={() => onProductClick(productUI)}
+                    >
+                      {/* ✅ HUY CHƯƠNG ĐỨNG YÊN: Căn phải (right-3) và nằm trên (top-3), không có animate-bounce */}
+                      {productUI.isBestseller && (
+                        <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm z-10 flex items-center gap-1">
+                          🔥 BESTSELLER
+                        </div>
+                      )}
                     <img
                       src={productUI.image || 'https://placehold.co/150?text=No+Image'}
                       alt={productUI.name}
@@ -147,10 +158,15 @@ export function MenuPage({ selectedStore, onSelectStore, onProductClick, onAddTo
                       <p className="text-xs text-gray-400 mb-2 line-clamp-2">
                         {productUI.descriptionU || "Chưa có mô tả cho sản phẩm này"}
                       </p>
+
                       <div className="flex items-center justify-between mt-auto">
                         <span className="text-red-600 font-bold">
                           {productUI.price?.toLocaleString('vi-VN')} ₫
                         </span>
+
+
+                    
+      
                         <button 
                           className="w-8 h-8 bg-blue-900 text-white rounded-lg flex items-center justify-center"
                           onClick={(e) => {
