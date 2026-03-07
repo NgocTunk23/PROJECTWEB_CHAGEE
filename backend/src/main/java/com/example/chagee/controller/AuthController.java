@@ -11,7 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-
 import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -31,7 +30,7 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
-    // --- API ĐĂNG NHẬP (Hỗ trợ cả Admin và Buyer) ---
+    // --- API ĐĂNG NHẬP ---
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         String username = loginRequest.getUsername();
@@ -44,10 +43,7 @@ public class AuthController {
             if (encoder.matches(password, admin.getPassword())) {
                 String role = (admin.getPermissionlevel() != null && admin.getPermissionlevel() == 10) ? "ADMIN" : "STAFF";
                 String token = jwtUtils.generateToken(admin.getUsername(), role);
-                
-                // Lấy fullname, nếu null thì lấy tạm username
                 String fullname = (admin.getFullname() != null) ? admin.getFullname() : admin.getUsername();
-                
                 return ResponseEntity.ok(new JwtResponse(token, admin.getUsername(), role, 0, fullname, admin.getPhonenumber()));
             }
         }
@@ -60,37 +56,46 @@ public class AuthController {
                 String role = "CUSTOMER"; 
                 String token = jwtUtils.generateToken(buyer.getUsername(), role);
                 int points = (buyer.getRewardpoints() != null) ? buyer.getRewardpoints() : 0;
-                
-                // Lấy fullname (đã đồng bộ viết thường)
-                String fullname = buyer.getFullname(); 
-                
-                return ResponseEntity.ok(new JwtResponse(token, buyer.getUsername(), role, points, fullname, buyer.getPhonenumber()));
+                return ResponseEntity.ok(new JwtResponse(token, buyer.getUsername(), role, points, buyer.getFullname(), buyer.getPhonenumber()));
             }
         }
 
         return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid username or password!"));
     }
 
-    // --- API ĐĂNG KÝ (Mặc định cho khách hàng mới) ---
+    // --- API ĐĂNG KÝ (Đã sửa logic check trùng và gán biến) ---
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        if (buyerRepository.existsByPhonenumber(signUpRequest.getPhonenumber())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Phone number is already taken!"));
+        
+        // 1. Chặn trùng Username (Tránh lỗi 500 khóa chính)
+        if (buyerRepository.existsByUsername(signUpRequest.getUsername())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Tên đăng nhập đã tồn tại!"));
         }
 
-        Buyer user = new Buyer();
-        user.setPermissionlevel(0); 
-        user.setUsername(signUpRequest.getPhonenumber()); // Dùng SĐT làm định danh
-        user.setFullname(signUpRequest.getFullname());    // Lưu họ tên người dùng
-        user.setPhonenumber(signUpRequest.getPhonenumber());
-        user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setRewardpoints(0); 
+        // 2. Chặn trùng Email (Tránh lỗi 500 unique constraint)
+        if (buyerRepository.existsByEmail(signUpRequest.getEmail())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email đã được sử dụng!"));
+        }
 
-        buyerRepository.save(user);
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+        // 3. Chặn trùng Số điện thoại
+        if (buyerRepository.existsByPhonenumber(signUpRequest.getPhonenumber())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Số điện thoại đã được đăng ký!"));
+        }
+
+        // 4. Tạo User mới và lưu
+        Buyer user = new Buyer();
+        user.setUsername(signUpRequest.getUsername()); // ✅ Dùng đúng Username khách nhập
+        user.setEmail(signUpRequest.getEmail());       // ✅ Lưu Email
+        user.setFullname(signUpRequest.getFullname());
+        user.setPhonenumber(signUpRequest.getPhonenumber());
+        user.setPassword(encoder.encode(signUpRequest.getPassword())); // Lưu vào passwordU
+        
+        // Các trường RewardPoints, Permission, MembershipTier đã được gán mặc định trong Buyer Constructor
+        Buyer savedUser = buyerRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 
-    // --- DTO CLASSES (Cấu trúc dữ liệu trao đổi) ---
+    // --- DTO CLASSES ---
 
     public static class LoginRequest {
         @NotBlank private String username;
@@ -102,9 +107,17 @@ public class AuthController {
     }
 
     public static class SignupRequest {
-        @NotBlank private String fullname; // Viết thường toàn bộ
+        @NotBlank private String username;    // ✅ Đã thêm
+        @NotBlank private String email;       // ✅ Đã thêm
+        @NotBlank private String fullname;
         @NotBlank private String phonenumber;
         @NotBlank private String password;
+
+        // Getters & Setters đầy đủ
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
         public String getFullname() { return fullname; }
         public void setFullname(String fullname) { this.fullname = fullname; }
         public String getPhonenumber() { return phonenumber; }
@@ -119,7 +132,7 @@ public class AuthController {
         private String username;
         private String role;
         private int rewardpoints;
-        private String fullname; // ✅ Đã sửa thành viết thường 100%
+        private String fullname;
         private String phonenumber;
 
         public JwtResponse(String accessToken, String username, String role, int rewardpoints, String fullname, String phonenumber) {
@@ -131,7 +144,7 @@ public class AuthController {
             this.phonenumber = phonenumber;
         }
 
-        // Getters and Setters
+        // Getters & Setters
         public String getToken() { return token; }
         public void setToken(String token) { this.token = token; }
         public String getType() { return type; }

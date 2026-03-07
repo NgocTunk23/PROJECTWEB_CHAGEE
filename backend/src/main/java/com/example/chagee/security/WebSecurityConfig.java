@@ -10,7 +10,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // ✅ Dùng BCrypt thay cho NoOp
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -24,35 +25,27 @@ import java.util.List;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    // Inject Service xử lý logic tìm kiếm User (Admin/Buyer)
     @Autowired
     UserDetailsServiceImpl userDetailsService;
 
-    // Filter xử lý Token JWT
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
         return new AuthTokenFilter();
     }
 
-    // --- CẤU HÌNH PASSWORD ENCODER ---
-    // Đang dùng NoOp (Không mã hóa) cho môi trường Dev
-    @SuppressWarnings("deprecation")
+    // --- CẤU HÌNH PASSWORD ENCODER (CHỐT HẠ) ---
+    // ✅ Đã đổi sang BCrypt để khớp với AuthController và bảo mật thật
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+            // Đây là "tổng đài" mật khẩu, nó sẽ tự chọn loại mã hóa dựa trên tiền tố {id}
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    // --- CẤU HÌNH AUTHENTICATION PROVIDER (QUAN TRỌNG) ---
-    // Hàm này kết nối UserDetailsService của bạn với Spring Security
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        
-        // Báo cho Spring biết dùng userDetailsService tùy chỉnh (tìm 2 bảng)
         authProvider.setUserDetailsService(userDetailsService);
-        // Báo cho Spring biết cách so khớp mật khẩu
-        authProvider.setPasswordEncoder(passwordEncoder()); // dùng passwordEncoder() đã khai báo ở trên
-        
+        authProvider.setPasswordEncoder(passwordEncoder()); 
         return authProvider;
     }
 
@@ -61,43 +54,38 @@ public class WebSecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-    // --- CẤU HÌNH SECURITY FILTER CHAIN ---
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Cấu hình CORS và tắt CSRF
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable()) // Tắt CSRF vì dùng JWT
-
-            // 2. Quản lý Session: Stateless (Không lưu session)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            // 3. Phân quyền truy cập (Authorize Requests)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()      // Cho phép Login/Register
-                .requestMatchers("/api/products/**").permitAll()  // Cho phép xem sản phẩm
-                .requestMatchers("/api/stores/**").permitAll()    // Cho phép xem cửa hàng
-                .requestMatchers("/error").permitAll()            // Cho phép xem trang lỗi (tránh lỗi 403 oan)
+                // ✅ Mở cửa hoàn toàn cho các API này để React không bị 403
+                .requestMatchers("/api/auth/**").permitAll()      
+                .requestMatchers("/api/products/**").permitAll()  
+                .requestMatchers("/api/stores/**").permitAll()    
                 .requestMatchers("/api/vouchers/**").permitAll()
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN") // Chỉ Admin mới vào được
                 .requestMatchers("/api/branches/**").permitAll()
-                .anyRequest().authenticated()                     // Các link còn lại phải đăng nhập
+                .requestMatchers("/error").permitAll()            
+                
+                // ✅ Phân quyền cho Admin
+                .requestMatchers("/api/admin/**").hasRole("ADMIN") 
+                
+                // Các link còn lại (như đặt hàng, profile) bắt buộc phải có Token
+                .anyRequest().authenticated()                     
             );
 
-        // 4. Thêm Provider đã cấu hình ở trên
         http.authenticationProvider(authenticationProvider());
-
-        // 5. Thêm Filter kiểm tra Token trước khi xác thực user
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // --- CẤU HÌNH CORS (CHO PHÉP REACT GỌI API) ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép tất cả các nguồn (React localhost:3000, 5173...)
+        // ✅ Cho phép React gọi API
         configuration.setAllowedOriginPatterns(List.of("*")); 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

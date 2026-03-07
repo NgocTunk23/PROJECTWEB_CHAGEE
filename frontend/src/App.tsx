@@ -177,19 +177,46 @@ function App() {
     }
   };
 
-  const handleRegister = async (data: RegisterData) => {
-    setIsLoading(true);
-    try {
-      const response = await AuthService.register(data);
-      setCurrentUser(response.user);
-      alert("Đăng ký thành công!");
-    } catch (error) {
-      console.error("Register failed:", error);
-      alert("Đăng ký thất bại. Vui lòng thử lại!");
-    } finally {
-      setIsLoading(false);
+const handleRegister = async (data: RegisterData) => {
+  setIsLoading(true);
+  try {
+    // 1. Gọi API
+    const response = await AuthService.register(data);
+    
+    // 2. Lấy dữ liệu user (tùy cấu trúc API của ông)
+    const userData = response.user || response;
+    
+    // 3. Cập nhật State và LocalStorage
+    setCurrentUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    
+    // 4. Reset giỏ hàng cho sạch sẽ
+    setCartItems([]); 
+    localStorage.removeItem('cart'); 
+
+    // 5. CHUYỂN VÀO TRANG CHỦ NGAY
+    setCurrentPage('home');
+    
+    alert("🎉 Đăng ký thành công! Chào mừng bạn.");
+
+  } catch (error: any) {
+    // 🔍 Soi lỗi thật sự từ Backend trả về
+    const serverError = error.response?.data?.message || "";
+    
+    console.error("❌ Lỗi từ Backend:", error.response?.data);
+
+    // Dịch lỗi sang tiếng Việt cho thân thiện
+    if (serverError.includes("Phone number is already taken")) {
+      alert("Số điện thoại này đã được sử dụng rồi Toon ơi!");
+    } else if (serverError.includes("username already exists")) {
+      alert("Tên đăng nhập này có người lấy rồi!");
+    } else {
+      alert("Có lỗi xảy ra: " + (serverError || "Lỗi hệ thống (500)"));
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // --- 2. LOAD GIỎ HÀNG TỪ DB ---
   useEffect(() => {

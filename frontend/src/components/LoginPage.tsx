@@ -11,8 +11,8 @@ export interface RegisterData {
   username: string;
   password: string;
   email: string;
-  phone: string;
-  full_name: string;
+  phonenumber: string;
+  fullname: string;
 }
 
 export function LoginPage({ onLogin, onRegister, onClose }: LoginPageProps) {
@@ -28,8 +28,8 @@ export function LoginPage({ onLogin, onRegister, onClose }: LoginPageProps) {
     username: '',
     password: '',
     email: '',
-    phone: '',
-    full_name: ''
+    phonenumber: '',
+    fullname: ''
   });
 
   const [errors, setErrors] = useState<any>({});
@@ -63,14 +63,14 @@ export function LoginPage({ onLogin, onRegister, onClose }: LoginPageProps) {
       newErrors.email = 'Email không hợp lệ';
     }
 
-    if (!registerData.phone.trim()) {
-      newErrors.phone = 'Vui lòng nhập số điện thoại';
-    } else if (!/^0\d{9}$/.test(registerData.phone)) {
-      newErrors.phone = 'Số điện thoại không hợp lệ';
+    if (!registerData.phonenumber.trim()) {
+      newErrors.phonenumber = 'Vui lòng nhập số điện thoại';
+    } else if (!/^0\d{9}$/.test(registerData.phonenumber)) {
+      newErrors.phonenumber = 'Số điện thoại không hợp lệ';
     }
 
-    if (!registerData.full_name.trim()) {
-      newErrors.full_name = 'Vui lòng nhập họ và tên';
+    if (!registerData.fullname.trim()) {
+      newErrors.fullname = 'Vui lòng nhập họ và tên';
     }
 
     setErrors(newErrors);
@@ -207,16 +207,16 @@ export function LoginPage({ onLogin, onRegister, onClose }: LoginPageProps) {
                   <User size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
-                    value={registerData.full_name}
-                    onChange={(e) => setRegisterData({ ...registerData, full_name: e.target.value })}
+                    value={registerData.fullname}
+                    onChange={(e) => setRegisterData({ ...registerData, fullname: e.target.value })}
                     placeholder="Nhập họ và tên"
                     className={`w-full pl-11 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                      errors.full_name ? 'border-red-500' : 'border-gray-200'
+                      errors.fullname ? 'border-red-500' : 'border-gray-200'
                     }`}
                   />
                 </div>
-                {errors.full_name && (
-                  <p className="text-xs text-red-500 mt-1">{errors.full_name}</p>
+                {errors.fullname && (
+                  <p className="text-xs text-red-500 mt-1">{errors.fullname}</p>
                 )}
               </div>
 
@@ -270,16 +270,16 @@ export function LoginPage({ onLogin, onRegister, onClose }: LoginPageProps) {
                   <Phone size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="tel"
-                    value={registerData.phone}
-                    onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                    value={registerData.phonenumber}
+                    onChange={(e) => setRegisterData({ ...registerData, phonenumber: e.target.value })}
                     placeholder="Nhập số điện thoại"
                     className={`w-full pl-11 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                      errors.phone ? 'border-red-500' : 'border-gray-200'
+                      errors.phonenumber ? 'border-red-500' : 'border-gray-200'
                     }`}
                   />
                 </div>
-                {errors.phone && (
-                  <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+                {errors.phonenumber && (
+                  <p className="text-xs text-red-500 mt-1">{errors.phonenumber}</p>
                 )}
               </div>
 

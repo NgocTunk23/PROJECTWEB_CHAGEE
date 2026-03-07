@@ -25,3 +25,5 @@ git commit -m "Thêm login"
 git push origin main
 # COPY QUA Ổ D
 cp -r . /mnt/d/CHAGEE_BACKUP
+
+docker exec -i sql_container /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Password123!" -C -d chagee_db -Q "SELECT username, passwordU FROM Buyers WHERE username = 'nntne';"

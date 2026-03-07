@@ -8,11 +8,16 @@ import java.util.Optional;
 @Repository
 public interface BuyerRepository extends JpaRepository<Buyer, String> {
     
-    // Spring tự động map với thuộc tính "username" trong Entity
+    // Tìm kiếm user theo username
     Optional<Buyer> findByUsername(String username);
 
-    // ✅ CHÍNH XÁC: "Phonenumber" khớp với thuộc tính "phonenumber" trong Entity
-    // Nếu bạn viết "PhoneNumber" (chữ N hoa) sẽ bị lỗi vì Entity không có biến đó.
+    // ✅ KIỂM TRA TRÙNG USERNAME: Cần thiết vì username là khóa chính
+    boolean existsByUsername(String username);
+
+    // ✅ KIỂM TRA TRÙNG PHONENUMBER: Khớp 100% với biến phonenumber trong Entity
     boolean existsByPhonenumber(String phonenumber);
 
+    // ✅ KIỂM TRA TRÙNG EMAIL: Cực kỳ quan trọng vì Entity đang để unique = true
+    // Nếu thiếu hàm này để check trước khi lưu, SQL sẽ quăng lỗi 500 khi trùng email
+    boolean existsByEmail(String email);
 }

@@ -218,20 +218,16 @@ GO
 -- =============================================
 -- 1. ADMIN
 -- =============================================
-INSERT INTO Admins (
-    username, passwordU, email, phonenumber, fullname, permissionlevel
-) VALUES
-('manager01', '123456789', 'manager01@chagee.com', '0909000001', N'Nguyễn Ngọc Tôn', 10),
-('manager02', '123456789', 'manager02@chagee.com', '0909000002', N'Phan Ngọc Quỳnh Trang', 10);
+-- 1. ADMINS (Dùng {noop} để báo Java đây là mật khẩu thô)
+INSERT INTO Admins (username, passwordU, email, phonenumber, fullname, permissionlevel) VALUES 
+('manager01', '{noop}123456789', 'manager01@chagee.com', '0909000001', N'Nguyễn Ngọc Tôn', 10),
+('manager02', '{noop}123456789', 'manager02@chagee.com', '0909000002', N'Phan Ngọc Quỳnh Trang', 10);
 GO
--- =============================================
+
 -- 2. BUYERS
--- =============================================
-INSERT INTO Buyers (
-    username, passwordU, email, phonenumber, fullname, rewardpoints, membershiptier, avatarlink
-) VALUES
-('member01', '123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 600, N'Silver', 'images/user_avts/avt_member01.jpeg'),
-('member02', '123456789', 'member02@gmail.com', '0911000002', N'Trần Nhi', 300, N'Gold', 'images/user_avts/avt_member02.jpeg');
+INSERT INTO Buyers (username, passwordU, email, phonenumber, fullname, rewardpoints, membershiptier) VALUES 
+('member01', '{noop}123456789', 'member01@gmail.com', '0911000002', N'Nguyễn Văn An', 600, N'Silver'),
+('member02', '{noop}123456789', 'member02@gmail.com', '0911000003', N'Trần Nhi', 300, N'Gold');
 GO
 -- =============================================
 -- 3. CHI NHÁNH (***FIXED***)
